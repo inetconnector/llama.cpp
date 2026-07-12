@@ -17,9 +17,11 @@ add_library(llama
             llama-chat.cpp
             llama-context.cpp
             llama-cparams.cpp
+            llama-ahsma.h
             llama-grammar.cpp
             llama-graph.cpp
             llama-hparams.cpp
+            llama-ahsma.cpp
             llama-impl.cpp
             llama-io.cpp
             llama-kv-cache.cpp

@@ -43,6 +43,7 @@ enum llm_fused_op {
     LLM_FUSED_OP_GDN_AR,
     LLM_FUSED_OP_GDN_CH,
     LLM_FUSED_OP_LIGHTNING_INDEXER,
+    LLM_FUSED_OP_AHSMA_ROUTE,
 };
 
 enum llm_ffn_op_type : int {
@@ -382,6 +383,7 @@ public:
     const llama_cparams cparams;
 
     const llama_kv_cache_context * mctx;
+    const int32_t il = -1;
 };
 
 class llm_graph_input_attn_k_dsa : public llm_graph_input_i {

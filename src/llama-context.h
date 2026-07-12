@@ -23,6 +23,8 @@ class llama_io_write_i;
 // "memory" as in abstract memory for the context
 struct llama_memory_i;
 struct llama_memory_context_i;
+class llama_ahsma_index;
+class llama_kv_cache;
 
 // stores copy of the memory in device buffer. used for fast state save/load
 struct llama_memory_buffer {
@@ -72,6 +74,11 @@ struct llama_context {
     uint32_t n_threads_batch() const;
 
     llama_memory_t get_memory() const;
+    bool has_ahsma_index() const;
+    llama_ahsma_index * get_ahsma_index();
+    const llama_ahsma_index * get_ahsma_index() const;
+    uint64_t get_ahsma_step() const;
+    std::vector<float> build_ahsma_route_query(const llama_ubatch & ubatch, int32_t il) const;
 
     // return true if the memory was updated
     bool memory_update(bool optimize);
@@ -137,8 +144,10 @@ struct llama_context {
     llm_graph_result * process_ubatch(
                 const llama_ubatch & ubatch,
                     llm_graph_type   gtype,
-            llama_memory_context_i * mctx,
-                       ggml_status & ret);
+                    llama_memory_context_i * mctx,
+                    ggml_status & ret);
+
+    void refresh_ahsma_index();
 
     int encode(const llama_batch & batch_inp);
     int decode(const llama_batch & batch_inp);
@@ -366,6 +375,9 @@ private:
 
     llm_graph_result_ptr gf_res_prev;
     llm_graph_result_ptr gf_res_reserve;
+
+    std::unique_ptr<llama_ahsma_index> ahsma_index;
+    mutable uint64_t ahsma_step = 0;
 
     // host buffer for the model output (logits and embeddings)
     ggml_backend_buffer_ptr buf_output;

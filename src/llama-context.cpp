@@ -7,11 +7,15 @@
 #include "llama-batch.h"
 #include "llama-io.h"
 #include "llama-memory.h"
+#include "llama-kv-cache.h"
 #include "llama-mmap.h"
 #include "llama-model.h"
 #include "llama-ext.h"
+#include "llama-ahsma.h"
 #include "llama.h"
 
+#include <cstdlib>
+#include <algorithm>
 #include <cinttypes>
 #include <cmath>
 #include <cstring>
@@ -59,6 +63,12 @@ static const llm_fused_op_probe llm_fused_op_lid_probe = {
     /*.op               =*/ LLM_FUSED_OP_LIGHTNING_INDEXER,
     /*.name             =*/ "Lightning Indexer",
     /*.n_tokens_per_seq =*/ 1,
+};
+
+static const llm_fused_op_probe llm_fused_op_ahsma_probe = {
+    /*.op               =*/ LLM_FUSED_OP_AHSMA_ROUTE,
+    /*.name             =*/ "AHSMA Route",
+    /*.n_tokens_per_seq =*/ 64,
 };
 
 llama_context::llama_context(
@@ -234,6 +244,7 @@ llama_context::llama_context(
 
     cparams.fused_lid    = true;
     cparams.auto_flid    = true;
+    cparams.ahsma_enabled = false;
 
     // with causal attention, the batch size is limited by the context size
     cparams.n_batch = cparams.causal_attn ? std::min(cparams.n_ctx, params.n_batch) : params.n_batch;
@@ -254,6 +265,17 @@ llama_context::llama_context(
 
         if (graph_reuse_disable) {
             LLAMA_LOG_WARN("%s: graph reuse disabled\n", __func__);
+        }
+    }
+
+    {
+        const char * LLAMA_AHSMA = getenv("LLAMA_AHSMA");
+        cparams.ahsma_enabled = LLAMA_AHSMA ? (atoi(LLAMA_AHSMA) != 0) : cparams.ahsma_enabled;
+        if (cparams.ahsma_enabled) {
+            LLAMA_LOG_INFO("%s: experimental AHSMA enabled\n", __func__);
+            llama_ahsma_params ahsma_params;
+            ahsma_params.enabled = cparams.ahsma_enabled;
+            ahsma_index = std::make_unique<llama_ahsma_index>(ahsma_params);
         }
     }
 
@@ -537,6 +559,10 @@ void llama_context::resolve_fused_ops(const llama_memory_context_i * mctx, uint3
         resolve(llm_fused_op_lid_probe, cparams.fused_lid);
         cparams.auto_flid = false;
     }
+
+    if (cparams.ahsma_enabled) {
+        resolve(llm_fused_op_ahsma_probe, cparams.ahsma_enabled);
+    }
 }
 
 void llama_context::sched_reserve() {
@@ -741,6 +767,70 @@ llama_memory_t llama_context::get_memory() const {
     return memory.get();
 }
 
+bool llama_context::has_ahsma_index() const {
+    return static_cast<bool>(ahsma_index);
+}
+
+uint64_t llama_context::get_ahsma_step() const {
+    return ahsma_step;
+}
+
+llama_ahsma_index * llama_context::get_ahsma_index() {
+    return ahsma_index.get();
+}
+
+const llama_ahsma_index * llama_context::get_ahsma_index() const {
+    return ahsma_index.get();
+}
+
+std::vector<float> llama_context::build_ahsma_route_query(const llama_ubatch & ubatch, int32_t il) const {
+    std::vector<float> query;
+
+    if (!ahsma_index) {
+        return query;
+    }
+
+    const auto & params = ahsma_index->params();
+    query.resize(params.route_dim, 0.0f);
+
+    const llama_pos last_pos = ubatch.n_tokens > 0 ? ubatch.pos[ubatch.n_tokens - 1] : 0;
+    const llama_token last_token = (ubatch.token && ubatch.n_tokens > 0) ? ubatch.token[ubatch.n_tokens - 1] : 0;
+    const float layer_term = 0.013f * float(il + 1);
+    const float step_term  = 0.017f * float((ahsma_step % 4096) + 1);
+
+    for (uint32_t d = 0; d < params.route_dim; ++d) {
+        const float idx = float(d + 1);
+        const float pos_term   = std::sin(0.011f * float(last_pos + 1) * idx + layer_term);
+        const float token_term = std::cos(0.019f * float(last_token + 1) * idx + step_term);
+        query[d] = pos_term + token_term;
+    }
+
+    float norm = 0.0f;
+    for (float v : query) {
+        norm += v * v;
+    }
+
+    norm = std::sqrt(std::max(norm, 1e-20f));
+    for (float & v : query) {
+        v /= norm;
+    }
+
+    return query;
+}
+
+void llama_context::refresh_ahsma_index() {
+    if (!ahsma_index || !memory) {
+        return;
+    }
+
+    auto * kv = dynamic_cast<llama_kv_cache *>(memory.get());
+    if (kv == nullptr) {
+        return;
+    }
+
+    ahsma_index->update_from_cache(*kv);
+}
+
 bool llama_context::memory_update(bool optimize) {
     if (!memory) {
         return false;
@@ -773,6 +863,8 @@ bool llama_context::memory_update(bool optimize) {
 
         if (!mctx->apply()) {
             LLAMA_LOG_ERROR("%s: failed to apply memory update\n", __func__);
+        } else {
+            refresh_ahsma_index();
         }
     }
 
@@ -1288,6 +1380,11 @@ llm_graph_result * llama_context::process_ubatch(const llama_ubatch & ubatch, ll
         LLAMA_LOG_ERROR("%s: failed to apply memory context\n", __func__);
         ret = GGML_STATUS_FAILED;
         return nullptr;
+    } else if (mctx) {
+        refresh_ahsma_index();
+        if (cparams.ahsma_enabled) {
+            ++ahsma_step;
+        }
     }
 
     auto * res = gf_res_prev.get();

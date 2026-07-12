@@ -1224,6 +1224,58 @@ ggml_tensor * llama_kv_cache::get_k_storage(int32_t il) const {
     return layers[ikv].k;
 }
 
+std::vector<llama_ahsma_token_ref> llama_kv_cache::collect_ahsma_refs(int32_t il) const {
+    GGML_UNUSED(il);
+
+    std::vector<llama_ahsma_token_ref> refs;
+    const uint32_t n_kv = get_size();
+
+    refs.reserve(n_kv * n_stream);
+
+    for (uint32_t s = 0; s < n_stream; ++s) {
+        const auto & cells = v_cells[s];
+        for (uint32_t i = 0; i < cells.size(); ++i) {
+            if (cells.is_empty(i)) {
+                continue;
+            }
+
+            llama_seq_id seq_id = -1;
+            for (llama_seq_id cur = 0; cur < (llama_seq_id) n_seq_max; ++cur) {
+                if (cells.seq_has(i, cur)) {
+                    seq_id = cur;
+                    break;
+                }
+            }
+
+            if (seq_id < 0) {
+                continue;
+            }
+
+            refs.push_back({
+                /*.stream        =*/ s,
+                /*.physical_cell  =*/ s*n_kv + i,
+                /*.logical_pos    =*/ cells.pos_get(i),
+                /*.seq_id         =*/ seq_id,
+            });
+        }
+    }
+
+    std::sort(refs.begin(), refs.end(), [](const auto & a, const auto & b) {
+        if (a.seq_id != b.seq_id) {
+            return a.seq_id < b.seq_id;
+        }
+        if (a.logical_pos != b.logical_pos) {
+            return a.logical_pos < b.logical_pos;
+        }
+        if (a.stream != b.stream) {
+            return a.stream < b.stream;
+        }
+        return a.physical_cell < b.physical_cell;
+    });
+
+    return refs;
+}
+
 uint32_t llama_kv_cache::get_n_kv(const slot_info & sinfo) const {
     uint32_t result = 0;
 
@@ -2565,6 +2617,22 @@ const llama_ubatch & llama_kv_cache_context::get_ubatch() const {
 
 uint32_t llama_kv_cache_context::get_n_kv() const {
     return n_kv;
+}
+
+llama_context * llama_kv_cache_context::get_lctx() const {
+    return lctx;
+}
+
+uint64_t llama_kv_cache_context::get_ahsma_step() const {
+    return lctx ? lctx->get_ahsma_step() : 0;
+}
+
+llama_ahsma_index * llama_kv_cache_context::get_ahsma_index() const {
+    return lctx ? lctx->get_ahsma_index() : nullptr;
+}
+
+std::vector<float> llama_kv_cache_context::build_ahsma_route_query(const llama_ubatch & ubatch, int32_t il) const {
+    return lctx ? lctx->build_ahsma_route_query(ubatch, il) : std::vector<float>{};
 }
 
 ggml_type llama_kv_cache_context::type_k() const {

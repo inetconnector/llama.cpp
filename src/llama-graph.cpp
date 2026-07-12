@@ -14,6 +14,7 @@
 #include "llama-memory-recurrent.h"
 
 #include <cassert>
+#include <algorithm>
 #include <cmath>
 #include <cstring>
 #include <numeric>
@@ -42,6 +43,18 @@ static ggml_tensor * build_attn_inp_kq_mask(
     return res;
 }
 
+static ggml_tensor * build_attn_inp_ahsma_mask(
+        ggml_context * ctx,
+        const llama_kv_cache_context * mctx,
+        const llama_ubatch & ubatch,
+        const llama_cparams & cparams) {
+    ggml_tensor * res = build_attn_inp_kq_mask(ctx, mctx, ubatch, cparams);
+    if (res) {
+        ggml_set_name(res, "attn_inp_ahsma_mask");
+    }
+    return res;
+}
+
 static bool can_reuse_kq_mask(
         ggml_tensor * kq_mask,
         const llama_kv_cache_context * mctx,
@@ -60,6 +73,117 @@ static bool can_reuse_kq_mask(
 
     return res;
 }
+
+static bool can_reuse_ahsma_mask(
+        ggml_tensor * ahsma_mask,
+        const llama_kv_cache_context * mctx,
+        const llama_ubatch & ubatch,
+        const llama_cparams & cparams) {
+    if (!ahsma_mask) {
+        return true;
+    }
+
+    return can_reuse_kq_mask(ahsma_mask, mctx, ubatch, cparams);
+}
+
+static bool use_ahsma_route_mask(const llama_ubatch & ubatch, const llama_cparams & cparams) {
+    // Single-token decode is still on the normal attention path until the
+    // live route tensor is wired in end-to-end.
+    if (!cparams.ahsma_enabled || ubatch.n_tokens <= 1) {
+        return false;
+    }
+
+    // Pure prompt-eval batches that emit every token still take the standard
+    // path for now; the mixed prompt+decode benchmark is the stable AHSMA path.
+    if (ubatch.output) {
+        const bool all_output = std::all_of(
+            ubatch.output,
+            ubatch.output + ubatch.n_tokens,
+            [](int8_t v) { return v != 0; });
+        if (all_output) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+class llm_graph_input_attn_ahsma_mask : public llm_graph_input_i {
+public:
+    llm_graph_input_attn_ahsma_mask(
+            const llama_kv_cache_context * mctx,
+            int32_t il) :
+        mctx(mctx),
+        il(il) {
+    }
+
+    void set_input(const llama_ubatch * ubatch) override {
+        if (!mask || !mask->buffer) {
+            return;
+        }
+
+        const auto * lctx = mctx ? mctx->get_lctx() : nullptr;
+        auto * idx = mctx ? mctx->get_ahsma_index() : nullptr;
+
+        if (!lctx || !idx || !idx->is_enabled()) {
+            return;
+        }
+
+        const auto q_route = mctx->build_ahsma_route_query(*ubatch, il);
+        const auto route = idx->route(il, q_route.data(), idx->params().route_dim, mctx->get_n_kv(), mctx->get_ahsma_step());
+
+        const int64_t n_rows = mask->ne[1] * mask->ne[3];
+        const int64_t row_elems = mask->ne[0];
+        const size_t nbytes = ggml_nbytes(mask);
+
+        auto zero_tokens = [&](auto * data) {
+            for (int64_t row = 0; row < n_rows; ++row) {
+                const int64_t offs = row * row_elems;
+                for (const uint32_t token_id : route.token_ids) {
+                    if (token_id < (uint32_t) row_elems) {
+                        data[offs + token_id] = 0.0f;
+                    }
+                }
+            }
+        };
+
+        if (ggml_backend_buffer_is_host(mask->buffer)) {
+            if (mask->type == GGML_TYPE_F16) {
+                zero_tokens((ggml_fp16_t *) mask->data);
+            } else {
+                zero_tokens((float *) mask->data);
+            }
+        } else {
+            std::vector<uint8_t> tmp(nbytes);
+            ggml_backend_tensor_get(mask, tmp.data(), 0, nbytes);
+
+            if (mask->type == GGML_TYPE_F16) {
+                zero_tokens((ggml_fp16_t *) tmp.data());
+            } else {
+                zero_tokens((float *) tmp.data());
+            }
+
+            ggml_backend_tensor_set(mask, tmp.data(), 0, nbytes);
+        }
+    }
+
+    bool can_reuse(const llm_graph_params & params) override {
+        const auto * mctx_cur = static_cast<const llama_kv_cache_context *>(params.mctx);
+        mctx = mctx_cur;
+
+        if (!mask) {
+            return true;
+        }
+
+        return can_reuse_kq_mask(mask, mctx_cur, params.ubatch, params.cparams);
+    }
+
+    ggml_tensor * mask = nullptr;
+
+private:
+    const llama_kv_cache_context * mctx;
+    const int32_t il;
+};
 
 // impl
 
@@ -2669,12 +2793,21 @@ ggml_tensor * llm_graph_context::build_attn(
     }
 
     const auto & kq_mask = inp->get_kq_mask();
+    ggml_tensor * kq_mask_eff = kq_mask;
+    if (use_ahsma_route_mask(ubatch, cparams)) {
+        if (backend_cpu) {
+            ggml_backend_sched_set_tensor_backend(sched, kq_mask_eff, backend_cpu);
+        }
+        auto inp_ahsma = std::make_unique<llm_graph_input_attn_ahsma_mask>(mctx_cur, il);
+        inp_ahsma->mask = kq_mask_eff;
+        res->add_input(std::move(inp_ahsma));
+    }
 
     ggml_tensor * q = q_cur;
     ggml_tensor * k = mctx_cur->get_k(ctx0, il);
     ggml_tensor * v = mctx_cur->get_v(ctx0, il);
 
-    ggml_tensor * cur = build_attn_mha(q, k, v, kq_b, kq_mask, sinks, v_mla, kq_scale, il);
+    ggml_tensor * cur = build_attn_mha(q, k, v, kq_b, kq_mask_eff, sinks, v_mla, kq_scale, il);
     cb(cur, "kqv_out", il);
 
     if (inp->self_v_rot) {
@@ -2760,12 +2893,21 @@ ggml_tensor * llm_graph_context::build_attn(
     }
 
     const auto & kq_mask = inp->get_kq_mask();
+    ggml_tensor * kq_mask_eff = kq_mask;
+    if (use_ahsma_route_mask(ubatch, cparams)) {
+        if (backend_cpu) {
+            ggml_backend_sched_set_tensor_backend(sched, kq_mask_eff, backend_cpu);
+        }
+        auto inp_ahsma = std::make_unique<llm_graph_input_attn_ahsma_mask>(mctx_cur, il);
+        inp_ahsma->mask = kq_mask_eff;
+        res->add_input(std::move(inp_ahsma));
+    }
 
     ggml_tensor * q = q_cur;
     ggml_tensor * k = mctx_cur->get_k(ctx0, il);
     ggml_tensor * v = ggml_view_4d(ctx0, k, v_cur->ne[0], k->ne[1], k->ne[2], k->ne[3], k->nb[1], k->nb[2], k->nb[3], 0);
 
-    ggml_tensor * cur = build_attn_mha(q, k, v, kq_b, kq_mask, sinks, v_mla, kq_scale, il);
+    ggml_tensor * cur = build_attn_mha(q, k, v, kq_b, kq_mask_eff, sinks, v_mla, kq_scale, il);
     cb(cur, "kqv_out", il);
 
     if (wo) {

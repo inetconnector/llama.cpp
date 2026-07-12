@@ -1,6 +1,7 @@
 #pragma once
 
 #include "llama-batch.h"
+#include "llama-ahsma.h"
 #include "llama-graph.h"
 #include "llama-kv-cells.h"
 #include "llama-memory.h"
@@ -163,6 +164,7 @@ public:
 
     std::vector<uint32_t> get_layer_ids() const;
     ggml_tensor * get_k_storage(int32_t il) const;
+    std::vector<llama_ahsma_token_ref> collect_ahsma_refs(int32_t il) const;
 
     //
     // graph_build API
@@ -363,6 +365,10 @@ public:
     //
 
     uint32_t get_n_kv() const;
+    llama_context * get_lctx() const;
+    uint64_t get_ahsma_step() const;
+    llama_ahsma_index * get_ahsma_index() const;
+    std::vector<float> build_ahsma_route_query(const llama_ubatch & ubatch, int32_t il) const;
 
     ggml_type type_k() const;
     ggml_type type_v() const;

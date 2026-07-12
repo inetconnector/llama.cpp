@@ -43,6 +43,7 @@ struct llama_cparams {
     bool auto_fgdn;
     bool fused_lid;          // use fused lightning indexer
     bool auto_flid;
+    bool ahsma_enabled;      // use experimental AHSMA index plumbing
     bool no_perf;
     bool warmup;             // TODO: remove [TAG_LLAMA_GRAPH_NO_WARMUP]
     bool op_offload;
