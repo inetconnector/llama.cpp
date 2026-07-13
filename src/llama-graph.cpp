@@ -132,6 +132,10 @@ public:
         const auto q_route = mctx->build_ahsma_route_query(*ubatch, il);
         const auto route = idx->route(il, q_route.data(), idx->params().route_dim, mctx->get_n_kv(), mctx->get_ahsma_step());
 
+        if (route.token_ids.empty()) {
+            return;
+        }
+
         const int64_t n_rows = mask->ne[1] * mask->ne[3];
         const int64_t row_elems = mask->ne[0];
         const size_t nbytes = ggml_nbytes(mask);
