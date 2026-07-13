@@ -17,6 +17,7 @@ struct ggml_context;
 struct ggml_tensor;
 
 struct llama_cparams;
+struct llama_context;
 struct llama_layer;
 
 struct llama_memory_context_i;
@@ -685,6 +686,7 @@ struct llm_graph_params {
     const llama_adapter_cvec     * cvec;
     const llama_adapter_loras    * loras;
     const llama_memory_context_i * mctx;
+    llama_context                * lctx;
     const llama_cross            * cross;
 
     std::map<llama_seq_id, llama_sampler *> samplers;
@@ -925,6 +927,7 @@ struct llm_graph_context {
     const llama_adapter_cvec     * cvec;
     const llama_adapter_loras    * loras;
     const llama_memory_context_i * mctx;
+    llama_context                * lctx;
     const llama_cross            * cross;
 
     std::map<llama_seq_id, llama_sampler *> samplers;
@@ -1070,6 +1073,7 @@ struct llm_graph_context {
             ggml_tensor * v,       // [n_embd_head_v, n_head_v, n_tokens] (v_trans == false)
             ggml_tensor * kq_b,
             ggml_tensor * kq_mask,
+            ggml_tensor * ahsma_selection,
             ggml_tensor * sinks,   // [n_head_q]
             ggml_tensor * v_mla,   // [n_embd_head_v_mla, n_embd_head_v, n_head_v]
                   float   kq_scale,

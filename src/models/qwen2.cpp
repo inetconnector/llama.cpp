@@ -1,5 +1,14 @@
 #include "models.h"
 
+static bool qwen2_ahsma_debug_enabled() {
+    static const bool enabled = []() {
+        const char * env = getenv("LLAMA_AHSMA_DEBUG");
+        return env && atoi(env) != 0;
+    }();
+
+    return enabled;
+}
+
 void llama_model_qwen2::load_arch_hparams(llama_model_loader & ml) {
     ml.get_key(LLM_KV_ATTENTION_LAYERNORM_RMS_EPS, hparams.f_norm_rms_eps);
 
@@ -83,6 +92,9 @@ llama_model_qwen2::graph::graph(const llama_model & model, const llm_graph_param
             auto [Qcur, Kcur, Vcur] = build_qkv(model.layers[il], cur,
                     n_embd_head, n_head, n_head_kv, il);
 
+            if (qwen2_ahsma_debug_enabled()) {
+                LLAMA_LOG_INFO("%s: il=%d entering rope ext\n", __func__, il);
+            }
             Qcur = ggml_rope_ext(
                     ctx0, Qcur, inp_pos, nullptr,
                     n_rot, rope_type, n_ctx_orig, freq_base, freq_scale,
@@ -94,14 +106,23 @@ llama_model_qwen2::graph::graph(const llama_model & model, const llm_graph_param
                     n_rot, rope_type, n_ctx_orig, freq_base, freq_scale,
                     ext_factor, attn_factor, beta_fast, beta_slow
                     );
+            if (qwen2_ahsma_debug_enabled()) {
+                LLAMA_LOG_INFO("%s: il=%d leaving rope ext\n", __func__, il);
+            }
 
             cb(Qcur, "Qcur", il);
             cb(Kcur, "Kcur", il);
             cb(Vcur, "Vcur", il);
 
+            if (qwen2_ahsma_debug_enabled()) {
+                LLAMA_LOG_INFO("%s: il=%d entering build_attn\n", __func__, il);
+            }
             cur = build_attn(inp_attn,
                     model.layers[il].wo, model.layers[il].wo_b, model.layers[il].wo_s,
                     Qcur, Kcur, Vcur, nullptr, nullptr, nullptr, 1.0f/sqrtf(float(n_embd_head)), il);
+            if (qwen2_ahsma_debug_enabled()) {
+                LLAMA_LOG_INFO("%s: il=%d leaving build_attn\n", __func__, il);
+            }
         }
         if (il == n_layer - 1 && inp_out_ids) {
             cur   = ggml_get_rows(ctx0,   cur, inp_out_ids);

@@ -4,6 +4,7 @@
 #include "llama-model.h"
 #include "llama-batch.h"
 #include "llama-cparams.h"
+#include "llama-context.h"
 
 #include "llama-kv-cache.h"
 #include "llama-kv-cache-iswa.h"
@@ -14,6 +15,7 @@
 #include "llama-memory-recurrent.h"
 
 #include <cassert>
+#include <cinttypes>
 #include <algorithm>
 #include <cmath>
 #include <cstring>
@@ -21,6 +23,7 @@
 #include <sstream>
 #include <string>
 #include <unordered_set>
+#include <vector>
 
 // dedup helpers
 
@@ -89,31 +92,63 @@ static bool can_reuse_ahsma_mask(
 static bool use_ahsma_route_mask(const llama_ubatch & ubatch, const llama_cparams & cparams) {
     // Single-token decode is still on the normal attention path until the
     // live route tensor is wired in end-to-end.
-    if (!cparams.ahsma_enabled || ubatch.n_tokens <= 1) {
+    // AHSMA routing is only enabled for larger chunks; smaller chunks still
+    // follow the dense path to avoid unstable probe-sized graphs.
+    if (!cparams.ahsma_enabled || ubatch.n_tokens <= 16) {
         return false;
     }
 
-    // Pure prompt-eval batches that emit every token still take the standard
-    // path for now; the mixed prompt+decode benchmark is the stable AHSMA path.
-    if (ubatch.output) {
-        const bool all_output = std::all_of(
-            ubatch.output,
-            ubatch.output + ubatch.n_tokens,
-            [](int8_t v) { return v != 0; });
-        if (all_output) {
-            return false;
-        }
+    return true;
+}
+
+static uint32_t get_ahsma_sparse_budget(const llama_context * lctx) {
+    const auto * idx = lctx ? lctx->get_ahsma_index() : nullptr;
+    if (!idx || !idx->is_enabled()) {
+        return 0;
     }
 
-    return true;
+    const auto & params = idx->params();
+    return params.local_window + params.global_tokens + params.retrieved_blocks * params.block_size;
+}
+
+static bool use_ahsma_sparse_route(
+        const llama_context * lctx,
+        const llama_ubatch & ubatch,
+        const llama_cparams & cparams) {
+    static const bool sparse_enabled = []() {
+        const char * env = getenv("LLAMA_AHSMA_SPARSE");
+        return env && atoi(env) != 0;
+    }();
+
+    if (!sparse_enabled) {
+        return false;
+    }
+
+    if (!use_ahsma_route_mask(ubatch, cparams)) {
+        return false;
+    }
+
+    const auto * idx = lctx ? lctx->get_ahsma_index() : nullptr;
+    return idx && idx->is_enabled();
+}
+
+static bool ahsma_route_debug_enabled() {
+    static const bool enabled = []() {
+        const char * env = getenv("LLAMA_AHSMA_DEBUG");
+        return env && atoi(env) != 0;
+    }();
+
+    return enabled;
 }
 
 class llm_graph_input_attn_ahsma_mask : public llm_graph_input_i {
 public:
     llm_graph_input_attn_ahsma_mask(
             const llama_kv_cache_context * mctx,
+            llama_context * lctx,
             int32_t il) :
         mctx(mctx),
+        lctx(lctx),
         il(il) {
     }
 
@@ -122,15 +157,39 @@ public:
             return;
         }
 
-        const auto * lctx = mctx ? mctx->get_lctx() : nullptr;
-        auto * idx = mctx ? mctx->get_ahsma_index() : nullptr;
+        if (ahsma_route_debug_enabled()) {
+            LLAMA_LOG_INFO("%s: il=%d entering mask set_input\n", __func__, il);
+        }
+
+        if (ahsma_route_debug_enabled()) {
+            LLAMA_LOG_INFO("%s: il=%d got lctx=%p\n", __func__, il, (const void *) lctx);
+        }
+        auto * idx = lctx ? lctx->get_ahsma_index() : nullptr;
+        if (ahsma_route_debug_enabled()) {
+            LLAMA_LOG_INFO("%s: il=%d got idx=%p\n", __func__, il, (void *) idx);
+        }
 
         if (!lctx || !idx || !idx->is_enabled()) {
             return;
         }
 
-        const auto q_route = mctx->build_ahsma_route_query(*ubatch, il);
-        const auto route = idx->route(il, q_route.data(), idx->params().route_dim, mctx->get_n_kv(), mctx->get_ahsma_step());
+        if (ahsma_route_debug_enabled()) {
+            LLAMA_LOG_INFO("%s: il=%d mask dims=%lldx%lldx%lldx%lld n_kv=%u step=%" PRIu64 "\n",
+                    __func__, il,
+                    (long long) mask->ne[0], (long long) mask->ne[1], (long long) mask->ne[2], (long long) mask->ne[3],
+                    (unsigned) mctx->get_n_kv(),
+                    (uint64_t) lctx->get_ahsma_step());
+        }
+
+        const auto q_route = lctx->build_ahsma_route_query(*ubatch, il);
+        if (ahsma_route_debug_enabled()) {
+            LLAMA_LOG_INFO("%s: il=%d q_route size=%zu\n", __func__, il, q_route.size());
+        }
+        const auto route = idx->route(il, q_route.data(), idx->params().route_dim, mctx->get_n_kv(), lctx->get_ahsma_step());
+
+        if (ahsma_route_debug_enabled()) {
+            LLAMA_LOG_INFO("%s: il=%d route tokens=%zu\n", __func__, il, route.token_ids.size());
+        }
 
         if (route.token_ids.empty()) {
             return;
@@ -169,11 +228,16 @@ public:
 
             ggml_backend_tensor_set(mask, tmp.data(), 0, nbytes);
         }
+
+        if (ahsma_route_debug_enabled()) {
+            LLAMA_LOG_INFO("%s: il=%d leaving mask set_input\n", __func__, il);
+        }
     }
 
     bool can_reuse(const llm_graph_params & params) override {
         const auto * mctx_cur = static_cast<const llama_kv_cache_context *>(params.mctx);
         mctx = mctx_cur;
+        lctx = params.lctx;
 
         if (!mask) {
             return true;
@@ -186,7 +250,142 @@ public:
 
 private:
     const llama_kv_cache_context * mctx;
+    llama_context * lctx;
     const int32_t il;
+};
+
+class llm_graph_input_attn_ahsma_sparse : public llm_graph_input_i {
+public:
+    llm_graph_input_attn_ahsma_sparse(
+            ggml_context * ctx,
+            const llama_kv_cache_context * mctx,
+            llama_context * lctx,
+            int32_t il,
+            uint32_t budget,
+            uint32_t n_head,
+            uint32_t n_tokens,
+            uint32_t n_stream,
+            ggml_type mask_type) :
+        mctx(mctx),
+        lctx(lctx),
+        il(il),
+        budget(budget),
+        n_head(n_head),
+        n_tokens(n_tokens),
+        n_stream(n_stream) {
+        token_ids = ggml_new_tensor_4d(ctx, GGML_TYPE_I32, budget, n_head, n_stream, 1);
+        ggml_set_input(token_ids);
+        ggml_set_name(token_ids, "attn_inp_ahsma_token_ids");
+
+        mask = ggml_new_tensor_4d(ctx, mask_type, budget, n_tokens/n_stream, 1, n_stream);
+        ggml_set_input(mask);
+        ggml_set_name(mask, "attn_inp_ahsma_mask");
+    }
+
+    void set_input(const llama_ubatch * ubatch) override {
+        if (!token_ids || !token_ids->buffer || !mask || !mask->buffer) {
+            return;
+        }
+
+        auto * idx = lctx ? lctx->get_ahsma_index() : nullptr;
+
+        if (!lctx || !idx || !idx->is_enabled()) {
+            return;
+        }
+
+        const uint32_t n_kv = mctx->get_n_kv();
+        const auto q_route = lctx->build_ahsma_route_query(*ubatch, il);
+        const auto route = idx->route(il, q_route.data(), idx->params().route_dim, n_kv, lctx->get_ahsma_step());
+
+        std::vector<std::vector<uint32_t>> per_stream(n_stream);
+        for (const uint32_t token_id : route.token_ids) {
+            const uint32_t stream = n_kv > 0 ? token_id / n_kv : 0;
+            if (stream >= n_stream) {
+                continue;
+            }
+
+            const uint32_t local_row = n_kv > 0 ? token_id % n_kv : 0;
+            auto & rows = per_stream[stream];
+            if (rows.size() < budget) {
+                rows.push_back(local_row);
+            }
+        }
+
+        const size_t token_elems = ggml_nelements(token_ids);
+        std::vector<int32_t> token_data(token_elems, 0);
+
+        const uint32_t rows_per_stream = n_tokens / n_stream;
+        const size_t mask_elems = ggml_nelements(mask);
+
+        if (mask->type == GGML_TYPE_F16) {
+            std::vector<ggml_fp16_t> mask_data(mask_elems, ggml_fp32_to_fp16(-INFINITY));
+
+            for (uint32_t s = 0; s < n_stream; ++s) {
+                const auto & rows = per_stream[s];
+                for (uint32_t r = 0; r < rows.size(); ++r) {
+                    for (uint32_t h = 0; h < n_head; ++h) {
+                        token_data[r + budget * (h + n_head * s)] = static_cast<int32_t>(rows[r]);
+                    }
+                    for (uint32_t q = 0; q < rows_per_stream; ++q) {
+                        mask_data[r + budget * (q + rows_per_stream * s)] = ggml_fp32_to_fp16(0.0f);
+                    }
+                }
+            }
+
+            ggml_backend_tensor_set(token_ids, token_data.data(), 0, token_elems * sizeof(token_data[0]));
+            ggml_backend_tensor_set(mask, mask_data.data(), 0, mask_elems * sizeof(mask_data[0]));
+        } else {
+            std::vector<float> mask_data(mask_elems, -INFINITY);
+
+            for (uint32_t s = 0; s < n_stream; ++s) {
+                const auto & rows = per_stream[s];
+                for (uint32_t r = 0; r < rows.size(); ++r) {
+                    for (uint32_t h = 0; h < n_head; ++h) {
+                        token_data[r + budget * (h + n_head * s)] = static_cast<int32_t>(rows[r]);
+                    }
+                    for (uint32_t q = 0; q < rows_per_stream; ++q) {
+                        mask_data[r + budget * (q + rows_per_stream * s)] = 0.0f;
+                    }
+                }
+            }
+
+            ggml_backend_tensor_set(token_ids, token_data.data(), 0, token_elems * sizeof(token_data[0]));
+            ggml_backend_tensor_set(mask, mask_data.data(), 0, mask_elems * sizeof(mask_data[0]));
+        }
+    }
+
+    bool can_reuse(const llm_graph_params & params) override {
+        const auto * mctx_cur = static_cast<const llama_kv_cache_context *>(params.mctx);
+        mctx = mctx_cur;
+        lctx = params.lctx;
+
+        if (!token_ids || !mask) {
+            return true;
+        }
+
+        bool res = true;
+        res &= token_ids->ne[0] == budget;
+        res &= token_ids->ne[1] == n_head;
+        res &= token_ids->ne[2] == n_stream;
+        res &= (mask->ne[0] == budget);
+        res &= (mask->ne[1] == params.ubatch.n_tokens / (params.cparams.kv_unified ? 1 : params.ubatch.n_seqs_unq));
+        res &= (mask->ne[2] == 1);
+        res &= (mask->ne[3] == (params.cparams.kv_unified ? 1 : params.ubatch.n_seqs_unq));
+
+        return res;
+    }
+
+    ggml_tensor * token_ids = nullptr;
+    ggml_tensor * mask = nullptr;
+
+private:
+    const llama_kv_cache_context * mctx;
+    llama_context * lctx;
+    const int32_t il;
+    const uint32_t budget;
+    const uint32_t n_head;
+    const uint32_t n_tokens;
+    const uint32_t n_stream;
 };
 
 // impl
@@ -593,6 +792,10 @@ void llm_graph_input_attn_no_cache::set_input(const llama_ubatch * ubatch) {
 }
 
 void llm_graph_input_attn_kv::set_input(const llama_ubatch * ubatch) {
+    if (ahsma_route_debug_enabled()) {
+        LLAMA_LOG_INFO("%s: entering attn_kv set_input\n", __func__);
+    }
+
     mctx->set_input_k_idxs(self_k_idxs, ubatch);
     mctx->set_input_v_idxs(self_v_idxs, ubatch);
 
@@ -608,6 +811,10 @@ void llm_graph_input_attn_kv::set_input(const llama_ubatch * ubatch) {
 
     if (self_v_rot && self_v_rot->buffer) {
         mctx->set_input_v_rot(self_v_rot);
+    }
+
+    if (ahsma_route_debug_enabled()) {
+        LLAMA_LOG_INFO("%s: leaving attn_kv set_input\n", __func__);
     }
 }
 
@@ -1484,6 +1691,7 @@ llm_graph_context::llm_graph_context(const llm_graph_params & params) :
     cvec             (params.cvec),
     loras            (params.loras),
     mctx             (params.mctx),
+    lctx             (params.lctx),
     cross            (params.cross),
     samplers         (params.samplers),
     cb_func          (params.cb),
@@ -1619,6 +1827,9 @@ llm_graph_qkv llm_graph_context::build_qkv(
                   int64_t   n_head,
                   int64_t   n_head_kv,
                       int   il) const {
+    if (ahsma_route_debug_enabled()) {
+        LLAMA_LOG_INFO("%s: il=%d entering build_qkv\n", __func__, il);
+    }
     const int64_t n_embd_q  = n_embd_head * n_head;
     const int64_t n_embd_kv = n_embd_head * n_head_kv;
 
@@ -1684,6 +1895,10 @@ llm_graph_qkv llm_graph_context::build_qkv(
     cb(Qcur, "Qcur", il);
     cb(Kcur, "Kcur", il);
     cb(Vcur, "Vcur", il);
+
+    if (ahsma_route_debug_enabled()) {
+        LLAMA_LOG_INFO("%s: il=%d leaving build_qkv\n", __func__, il);
+    }
 
     return { Qcur, Kcur, Vcur };
 }
@@ -2515,10 +2730,14 @@ ggml_tensor * llm_graph_context::build_attn_mha(
          ggml_tensor * v,
          ggml_tensor * kq_b,
          ggml_tensor * kq_mask,
+         ggml_tensor * ahsma_selection,
          ggml_tensor * sinks,
          ggml_tensor * v_mla,
                float   kq_scale,
                  int   il) const {
+    if (ahsma_route_debug_enabled()) {
+        LLAMA_LOG_INFO("%s: il=%d entered build_attn_mha\n", __func__, il);
+    }
     const bool v_trans = v->nb[1] > v->nb[2];
 
     // split the batch into streams if needed
@@ -2529,6 +2748,17 @@ ggml_tensor * llm_graph_context::build_attn_mha(
     q = ggml_permute(ctx0, q, 0, 2, 1, 3);
     k = ggml_permute(ctx0, k, 0, 2, 1, 3);
     v = ggml_permute(ctx0, v, 0, 2, 1, 3);
+
+    if (ahsma_selection) {
+        k = ggml_get_rows(ctx0, k, ahsma_selection);
+        v = ggml_get_rows(ctx0, v, ahsma_selection);
+        cb(k, "k_ahsma_sparse", il);
+        cb(v, "v_ahsma_sparse", il);
+    }
+
+    if (ahsma_route_debug_enabled()) {
+        LLAMA_LOG_INFO("%s: il=%d after row selection\n", __func__, il);
+    }
 
     ggml_tensor * cur;
 
@@ -2703,7 +2933,7 @@ ggml_tensor * llm_graph_context::build_attn(
     ggml_tensor * k = k_cur;
     ggml_tensor * v = v_cur;
 
-    ggml_tensor * cur = build_attn_mha(q, k, v, kq_b, kq_mask, sinks, v_mla, kq_scale, il);
+    ggml_tensor * cur = build_attn_mha(q, k, v, kq_b, kq_mask, nullptr, sinks, v_mla, kq_scale, il);
     cb(cur, "kqv_out", il);
 
     if (wo) {
@@ -2733,14 +2963,29 @@ static std::unique_ptr<llm_graph_input_attn_kv> build_attn_inp_kv_impl(
     {
         GGML_ASSERT(hparams.swa_type == LLAMA_SWA_TYPE_NONE && "Use llama_kv_cache_iswa for SWA");
 
+        if (ahsma_route_debug_enabled()) {
+            LLAMA_LOG_INFO("%s: building k idxs\n", __func__);
+        }
         inp->self_k_idxs = mctx_cur->build_input_k_idxs(ctx0, ubatch);
+        if (ahsma_route_debug_enabled()) {
+            LLAMA_LOG_INFO("%s: building v idxs\n", __func__);
+        }
         inp->self_v_idxs = mctx_cur->build_input_v_idxs(ctx0, ubatch);
 
+        if (ahsma_route_debug_enabled()) {
+            LLAMA_LOG_INFO("%s: building kq mask\n", __func__);
+        }
         inp->self_kq_mask = build_attn_inp_kq_mask(ctx0, mctx_cur, ubatch, cparams);
         inp->self_kq_mask_cnv = inp->self_kq_mask;
     }
 
+    if (ahsma_route_debug_enabled()) {
+        LLAMA_LOG_INFO("%s: building k rot\n", __func__);
+    }
     inp->self_k_rot = mctx_cur->build_input_k_rot(ctx0);
+    if (ahsma_route_debug_enabled()) {
+        LLAMA_LOG_INFO("%s: building v rot\n", __func__);
+    }
     inp->self_v_rot = mctx_cur->build_input_v_rot(ctx0);
 
     return inp;
@@ -2749,9 +2994,23 @@ static std::unique_ptr<llm_graph_input_attn_kv> build_attn_inp_kv_impl(
 llm_graph_input_attn_kv * llm_graph_context::build_attn_inp_kv() const {
     const auto * mctx_cur = static_cast<const llama_kv_cache_context *>(mctx);
 
+    if (ahsma_route_debug_enabled()) {
+        LLAMA_LOG_INFO("%s: building kv input for n_tokens=%d\n", __func__, (int) ubatch.n_tokens);
+    }
+
     auto inp = build_attn_inp_kv_impl(ctx0, ubatch, hparams, cparams, mctx_cur);
 
-    return (llm_graph_input_attn_kv *) res->add_input(std::move(inp));
+    if (ahsma_route_debug_enabled()) {
+        LLAMA_LOG_INFO("%s: adding kv input to graph\n", __func__);
+    }
+
+    auto * ret = (llm_graph_input_attn_kv *) res->add_input(std::move(inp));
+
+    if (ahsma_route_debug_enabled()) {
+        LLAMA_LOG_INFO("%s: kv input registered\n", __func__);
+    }
+
+    return ret;
 }
 
 ggml_tensor * llm_graph_context::build_attn(
@@ -2768,6 +3027,10 @@ ggml_tensor * llm_graph_context::build_attn(
             float     kq_scale,
             int       il) const {
     GGML_ASSERT(v_mla == nullptr);
+
+    if (ahsma_route_debug_enabled()) {
+        LLAMA_LOG_INFO("%s: il=%d entered attn wrapper\n", __func__, il);
+    }
 
     if (inp->self_k_rot) {
         q_cur = llama_mul_mat_hadamard(ctx0, q_cur, inp->self_k_rot);
@@ -2786,6 +3049,13 @@ ggml_tensor * llm_graph_context::build_attn(
     ggml_build_forward_expand(gf, k_cur);
 
     const auto * mctx_cur = inp->mctx;
+    ggml_tensor * q = q_cur;
+    ggml_tensor * k = mctx_cur->get_k(ctx0, il);
+    ggml_tensor * v = mctx_cur->get_v(ctx0, il);
+
+    if (ahsma_route_debug_enabled()) {
+        LLAMA_LOG_INFO("%s: il=%d got kv tensors\n", __func__, il);
+    }
 
     // store to KV cache
     {
@@ -2796,22 +3066,55 @@ ggml_tensor * llm_graph_context::build_attn(
         ggml_build_forward_expand(gf, mctx_cur->cpy_v(ctx0, v_cur, v_idxs, il));
     }
 
+    if (ahsma_route_debug_enabled()) {
+        LLAMA_LOG_INFO("%s: il=%d expanded kv cache writes\n", __func__, il);
+    }
+
     const auto & kq_mask = inp->get_kq_mask();
     ggml_tensor * kq_mask_eff = kq_mask;
-    if (use_ahsma_route_mask(ubatch, cparams)) {
+    ggml_tensor * ahsma_selection = nullptr;
+    const bool ahsma_sparse = use_ahsma_sparse_route(lctx, ubatch, cparams);
+    const bool ahsma_mask = !ahsma_sparse && use_ahsma_route_mask(ubatch, cparams);
+
+    if (ahsma_route_debug_enabled()) {
+        LLAMA_LOG_INFO("%s: il=%d n_tokens=%d n_kv=%u sparse=%d mask=%d\n",
+                __func__, il, (int) ubatch.n_tokens, (unsigned) (mctx_cur ? mctx_cur->get_n_kv() : 0), (int) ahsma_sparse, (int) ahsma_mask);
+    }
+
+    if (ahsma_sparse) {
+        if (ahsma_route_debug_enabled()) {
+            LLAMA_LOG_INFO("%s: il=%d entering sparse route setup\n", __func__, il);
+        }
+        const uint32_t budget = get_ahsma_sparse_budget(lctx);
+        const uint32_t n_head = k->ne[1];
+        const uint32_t n_stream = k->ne[3];
+        const auto mask_type = cparams.flash_attn ? GGML_TYPE_F16 : GGML_TYPE_F32;
+
+        auto inp_ahsma = std::make_unique<llm_graph_input_attn_ahsma_sparse>(
+            ctx0, mctx_cur, lctx, il, budget, n_head, ubatch.n_tokens, n_stream, mask_type);
+        if (backend_cpu) {
+            ggml_backend_sched_set_tensor_backend(sched, inp_ahsma->token_ids, backend_cpu);
+            ggml_backend_sched_set_tensor_backend(sched, inp_ahsma->mask, backend_cpu);
+        }
+        ahsma_selection = inp_ahsma->token_ids;
+        kq_mask_eff = inp_ahsma->mask;
+        res->add_input(std::move(inp_ahsma));
+    } else if (ahsma_mask) {
+        if (ahsma_route_debug_enabled()) {
+            LLAMA_LOG_INFO("%s: il=%d entering mask route setup\n", __func__, il);
+        }
         if (backend_cpu) {
             ggml_backend_sched_set_tensor_backend(sched, kq_mask_eff, backend_cpu);
         }
-        auto inp_ahsma = std::make_unique<llm_graph_input_attn_ahsma_mask>(mctx_cur, il);
+        auto inp_ahsma = std::make_unique<llm_graph_input_attn_ahsma_mask>(mctx_cur, lctx, il);
         inp_ahsma->mask = kq_mask_eff;
         res->add_input(std::move(inp_ahsma));
     }
 
-    ggml_tensor * q = q_cur;
-    ggml_tensor * k = mctx_cur->get_k(ctx0, il);
-    ggml_tensor * v = mctx_cur->get_v(ctx0, il);
-
-    ggml_tensor * cur = build_attn_mha(q, k, v, kq_b, kq_mask_eff, sinks, v_mla, kq_scale, il);
+    if (ahsma_route_debug_enabled()) {
+        LLAMA_LOG_INFO("%s: il=%d calling build_attn_mha\n", __func__, il);
+    }
+    ggml_tensor * cur = build_attn_mha(q, k, v, kq_b, kq_mask_eff, ahsma_selection, sinks, v_mla, kq_scale, il);
     cb(cur, "kqv_out", il);
 
     if (inp->self_v_rot) {
@@ -2888,6 +3191,9 @@ ggml_tensor * llm_graph_context::build_attn(
     ggml_build_forward_expand(gf, k_cur);
 
     const auto * mctx_cur = inp->mctx;
+    ggml_tensor * q = q_cur;
+    ggml_tensor * k = mctx_cur->get_k(ctx0, il);
+    ggml_tensor * v = ggml_view_4d(ctx0, k, v_cur->ne[0], k->ne[1], k->ne[2], k->ne[3], k->nb[1], k->nb[2], k->nb[3], 0);
 
     // store to KV cache
     {
@@ -2898,20 +3204,49 @@ ggml_tensor * llm_graph_context::build_attn(
 
     const auto & kq_mask = inp->get_kq_mask();
     ggml_tensor * kq_mask_eff = kq_mask;
-    if (use_ahsma_route_mask(ubatch, cparams)) {
+    ggml_tensor * ahsma_selection = nullptr;
+    const bool ahsma_sparse = use_ahsma_sparse_route(lctx, ubatch, cparams);
+    const bool ahsma_mask = !ahsma_sparse && use_ahsma_route_mask(ubatch, cparams);
+
+    if (ahsma_route_debug_enabled()) {
+        LLAMA_LOG_INFO("%s: il=%d n_tokens=%d n_kv=%u sparse=%d mask=%d\n",
+                __func__, il, (int) ubatch.n_tokens, (unsigned) (mctx_cur ? mctx_cur->get_n_kv() : 0), (int) ahsma_sparse, (int) ahsma_mask);
+    }
+
+    if (ahsma_sparse) {
+        if (ahsma_route_debug_enabled()) {
+            LLAMA_LOG_INFO("%s: il=%d entering sparse route setup\n", __func__, il);
+        }
+        const uint32_t budget = get_ahsma_sparse_budget(lctx);
+        const uint32_t n_head = k->ne[1];
+        const uint32_t n_stream = k->ne[3];
+        const auto mask_type = cparams.flash_attn ? GGML_TYPE_F16 : GGML_TYPE_F32;
+
+        auto inp_ahsma = std::make_unique<llm_graph_input_attn_ahsma_sparse>(
+            ctx0, mctx_cur, lctx, il, budget, n_head, ubatch.n_tokens, n_stream, mask_type);
+        if (backend_cpu) {
+            ggml_backend_sched_set_tensor_backend(sched, inp_ahsma->token_ids, backend_cpu);
+            ggml_backend_sched_set_tensor_backend(sched, inp_ahsma->mask, backend_cpu);
+        }
+        ahsma_selection = inp_ahsma->token_ids;
+        kq_mask_eff = inp_ahsma->mask;
+        res->add_input(std::move(inp_ahsma));
+    } else if (ahsma_mask) {
+        if (ahsma_route_debug_enabled()) {
+            LLAMA_LOG_INFO("%s: il=%d entering mask route setup\n", __func__, il);
+        }
         if (backend_cpu) {
             ggml_backend_sched_set_tensor_backend(sched, kq_mask_eff, backend_cpu);
         }
-        auto inp_ahsma = std::make_unique<llm_graph_input_attn_ahsma_mask>(mctx_cur, il);
+        auto inp_ahsma = std::make_unique<llm_graph_input_attn_ahsma_mask>(mctx_cur, lctx, il);
         inp_ahsma->mask = kq_mask_eff;
         res->add_input(std::move(inp_ahsma));
     }
 
-    ggml_tensor * q = q_cur;
-    ggml_tensor * k = mctx_cur->get_k(ctx0, il);
-    ggml_tensor * v = ggml_view_4d(ctx0, k, v_cur->ne[0], k->ne[1], k->ne[2], k->ne[3], k->nb[1], k->nb[2], k->nb[3], 0);
-
-    ggml_tensor * cur = build_attn_mha(q, k, v, kq_b, kq_mask_eff, sinks, v_mla, kq_scale, il);
+    if (ahsma_route_debug_enabled()) {
+        LLAMA_LOG_INFO("%s: il=%d calling build_attn_mha\n", __func__, il);
+    }
+    ggml_tensor * cur = build_attn_mha(q, k, v, kq_b, kq_mask_eff, ahsma_selection, sinks, v_mla, kq_scale, il);
     cb(cur, "kqv_out", il);
 
     if (wo) {
@@ -2996,7 +3331,7 @@ ggml_tensor * llm_graph_context::build_attn(
     ggml_tensor * k = mctx_cur->get_k(ctx0, il);
     ggml_tensor * v = ggml_view_4d(ctx0, k, v_cur->ne[0], k->ne[1], k->ne[2], k->ne[3], k->nb[1], k->nb[2], k->nb[3], 0);
 
-    ggml_tensor * cur = build_attn_mha(q, k, v, kq_b, kq_mask_top_k, sinks, v_mla, kq_scale, il);
+    ggml_tensor * cur = build_attn_mha(q, k, v, kq_b, kq_mask_top_k, nullptr, sinks, v_mla, kq_scale, il);
     cb(cur, "kqv_out", il);
 
     if (wo) {
@@ -3075,7 +3410,7 @@ ggml_tensor * llm_graph_context::build_attn(
     ggml_tensor * k = mctx_cur->get_k(ctx0, il);
     ggml_tensor * v = mctx_cur->get_v(ctx0, il);
 
-    ggml_tensor * cur = build_attn_mha(q, k, v, kq_b, kq_mask, sinks, v_mla, kq_scale, il);
+    ggml_tensor * cur = build_attn_mha(q, k, v, kq_b, kq_mask, nullptr, sinks, v_mla, kq_scale, il);
     cb(cur, "kqv_out", il);
 
     if (v_rot) {
@@ -3138,7 +3473,7 @@ ggml_tensor * llm_graph_context::build_attn(
     ggml_tensor * k = k_cur;
     ggml_tensor * v = v_cur;
 
-    ggml_tensor * cur = build_attn_mha(q, k, v, kq_b, kq_mask, sinks, v_mla, kq_scale, il);
+    ggml_tensor * cur = build_attn_mha(q, k, v, kq_b, kq_mask, nullptr, sinks, v_mla, kq_scale, il);
     cb(cur, "kqv_out", il);
 
     if (wo) {

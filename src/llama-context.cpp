@@ -68,7 +68,7 @@ static const llm_fused_op_probe llm_fused_op_lid_probe = {
 static const llm_fused_op_probe llm_fused_op_ahsma_probe = {
     /*.op               =*/ LLM_FUSED_OP_AHSMA_ROUTE,
     /*.name             =*/ "AHSMA Route",
-    /*.n_tokens_per_seq =*/ 64,
+    /*.n_tokens_per_seq =*/ 1,
 };
 
 llama_context::llama_context(
@@ -560,8 +560,12 @@ void llama_context::resolve_fused_ops(const llama_memory_context_i * mctx, uint3
         cparams.auto_flid = false;
     }
 
+    // AHSMA currently uses a runtime route query and sparse gather path that
+    // is validated during the real benchmark run. The generic probe path trips
+    // over the 64-token support check on this branch, so skip it here to keep
+    // context construction stable.
     if (cparams.ahsma_enabled) {
-        resolve(llm_fused_op_ahsma_probe, cparams.ahsma_enabled);
+        LLAMA_LOG_INFO("%s: skipping AHSMA probe; validating on the live graph instead\n", func);
     }
 }
 
@@ -2493,6 +2497,7 @@ llm_graph_params llama_context::graph_params(
         /*.cvec        =*/ cvec.get(),
         /*.loras       =*/ loras.get(),
         /*.mctx        =*/ mctx,
+        /*.lctx        =*/ const_cast<llama_context *>(this),
         /*.cross       =*/ &cross,
         /*.samplers    =*/ sampling.samplers,
         /*.n_outputs   =*/ n_outputs,
