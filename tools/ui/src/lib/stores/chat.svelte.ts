@@ -391,20 +391,24 @@ class ChatStore {
 					const streamedR = streamedReasoningContent || reasoningContent || '';
 					const content = isAppendMode ? existingContent + streamed : streamed;
 					const reasoning = isAppendMode ? existingReasoning + streamedR : streamedR;
-					// the DB write is the source of truth, mirror to the active store only when
-					// the conv is currently displayed
-					await DatabaseService.updateMessage(targetMessageId, {
-						content,
-						reasoningContent: reasoning || undefined,
-						toolCalls: toolCalls || '',
-						timings
-					});
-					writeActive({
-						content,
-						reasoningContent: reasoning || undefined,
-						timings
-					});
 					cleanup();
+					try {
+						// the DB write is the source of truth, mirror to the active store only when
+						// the conv is currently displayed
+						await DatabaseService.updateMessage(targetMessageId, {
+							content,
+							reasoningContent: reasoning || undefined,
+							toolCalls: toolCalls || '',
+							timings
+						});
+						writeActive({
+							content,
+							reasoningContent: reasoning || undefined,
+							timings
+						});
+					} catch (error) {
+						console.warn('[ChatStore] attachServerStream persistence failed:', error);
+					}
 				},
 				(err: Error) => {
 					console.error('attachServerStream pipe error:', err);
@@ -1386,25 +1390,29 @@ class ChatStore {
 				) => {
 					const content = streamedContent || finalContent || '';
 					const reasoning = streamedReasoningContent || reasoningContent;
-					const updateData: Record<string, unknown> = {
-						content,
-						reasoningContent: reasoning || undefined,
-						toolCalls: toolCalls || '',
-						timings
-					};
-					if (resolvedModel && !modelPersisted) updateData.model = resolvedModel;
-					await DatabaseService.updateMessage(currentMessageId, updateData);
-					const idx = conversationsStore.findMessageIndex(currentMessageId);
-					const uiUpdate: Partial<DatabaseMessage> = {
-						content,
-						reasoningContent: reasoning || undefined,
-						toolCalls: toolCalls || ''
-					};
-					if (timings) uiUpdate.timings = timings;
-					if (resolvedModel) uiUpdate.model = resolvedModel;
-					conversationsStore.updateMessageAtIndex(idx, uiUpdate);
-					await conversationsStore.updateCurrentNode(currentMessageId);
 					cleanupStreamingState();
+					try {
+						const updateData: Record<string, unknown> = {
+							content,
+							reasoningContent: reasoning || undefined,
+							toolCalls: toolCalls || '',
+							timings
+						};
+						if (resolvedModel && !modelPersisted) updateData.model = resolvedModel;
+						await DatabaseService.updateMessage(currentMessageId, updateData);
+						const idx = conversationsStore.findMessageIndex(currentMessageId);
+						const uiUpdate: Partial<DatabaseMessage> = {
+							content,
+							reasoningContent: reasoning || undefined,
+							toolCalls: toolCalls || ''
+						};
+						if (timings) uiUpdate.timings = timings;
+						if (resolvedModel) uiUpdate.model = resolvedModel;
+						conversationsStore.updateMessageAtIndex(idx, uiUpdate);
+						await conversationsStore.updateCurrentNode(currentMessageId);
+					} catch (error) {
+						console.warn('[ChatStore] Post-complete persistence failed:', error);
+					}
 					if (onComplete) await onComplete(content);
 					if (isRouterMode()) modelsStore.fetchRouterModels().catch(console.error);
 

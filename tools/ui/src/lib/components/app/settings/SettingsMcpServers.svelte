@@ -14,6 +14,7 @@
 	import { browser } from '$app/environment';
 	import { page } from '$app/state';
 	import { goto, replaceState } from '$app/navigation';
+	import { t } from '$lib/i18n';
 
 	interface Props {
 		class?: string;
@@ -76,7 +77,7 @@
 
 <div in:fade={{ duration: 150 }}>
 	<div class="fixed top-4.5 right-4 z-50 md:hidden">
-		<ActionIcon icon={X} tooltip="Close" onclick={handleClose} />
+		<ActionIcon icon={X} tooltip={t('Close')} onclick={handleClose} />
 	</div>
 
 	<div
@@ -85,7 +86,7 @@
 		<div class="flex items-center gap-2">
 			<McpLogo class="h-5 w-5 md:h-6 md:w-6" />
 
-			<h1 class="text-lg font-semibold md:text-2xl">MCP Servers</h1>
+			<h1 class="text-lg font-semibold md:text-2xl">{t('MCP Servers')}</h1>
 		</div>
 
 		<Button
@@ -96,7 +97,7 @@
 		>
 			<Plus class="h-4 w-4" />
 
-			Add New Server
+			{t('Add New Server')}
 		</Button>
 	</div>
 
@@ -105,7 +106,7 @@
 	<div class="grid gap-5 md:space-y-4 {className}">
 		{#if servers.length === 0 && !isAddingServer}
 			<div class="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
-				No MCP Servers configured yet. Add one to enable agentic features.
+				{t('No MCP Servers configured yet. Add one to enable agentic features.')}
 			</div>
 		{/if}
 

@@ -19,6 +19,7 @@
 	import { isRouterMode } from '$lib/stores/server.svelte';
 	import { modelsStore } from '$lib/stores/models.svelte';
 	import { ServerModelStatus } from '$lib/enums';
+	import { t } from '$lib/i18n';
 
 	import { hasAgenticContent } from '$lib/utils';
 
@@ -213,11 +214,11 @@
 	{#if showProcessingInfoTop}
 		<div class="mt-6 w-full max-w-3xl" in:fade>
 			<div class="processing-container">
-				<span class="processing-text">
-					{modelLoadingText ??
+					<span class="processing-text">
+						{modelLoadingText ??
 						processingState.getPromptProgressText() ??
 						processingState.getProcessingMessage() ??
-						'Processing...'}
+						t('Processing...')}
 				</span>
 			</div>
 		</div>
@@ -245,11 +246,11 @@
 	{#if showProcessingInfoBottom}
 		<div class="mt-4 w-full max-w-3xl" in:fade>
 			<div class="processing-container">
-				<span class="processing-text">
-					{modelLoadingText ??
+					<span class="processing-text">
+						{modelLoadingText ??
 						processingState.getPromptProgressText() ??
 						processingState.getProcessingMessage() ??
-						'Processing...'}
+						t('Processing...')}
 				</span>
 			</div>
 		</div>

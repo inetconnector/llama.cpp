@@ -1,5 +1,5 @@
 import type { Component } from 'svelte';
-import { MessageSquare, Zap, FolderOpen } from '@lucide/svelte';
+import { Camera, MessageSquare, Zap, FolderOpen } from '@lucide/svelte';
 import { FILE_TYPE_ICONS } from '$lib/constants/icons';
 import {
 	AttachmentAction,
@@ -7,6 +7,7 @@ import {
 	AttachmentItemVisibleWhen,
 	AttachmentMenuItemId
 } from '$lib/enums';
+import { t } from '$lib/i18n';
 
 export interface AttachmentMenuItem {
 	/** Unique identifier for the item */
@@ -36,44 +37,53 @@ export interface AttachmentMenuItem {
 export const ATTACHMENT_FILE_ITEMS: AttachmentMenuItem[] = [
 	{
 		id: AttachmentMenuItemId.IMAGES,
-		label: 'Images',
+		label: t('Images'),
 		icon: FILE_TYPE_ICONS.image,
 		class: 'images-button',
 		enabledWhen: AttachmentItemEnabledWhen.HAS_VISION_MODALITY,
-		disabledTooltip: 'Image processing requires a vision model',
+		disabledTooltip: t('Image processing requires a vision model'),
 		action: AttachmentAction.FILE_UPLOAD
 	},
 	{
+		id: AttachmentMenuItemId.PHOTO,
+		label: t('Camera'),
+		icon: Camera,
+		class: 'camera-button',
+		enabledWhen: AttachmentItemEnabledWhen.HAS_VISION_MODALITY,
+		disabledTooltip: t('Image processing requires a vision model'),
+		action: AttachmentAction.PHOTO_CLICK
+	},
+	{
 		id: AttachmentMenuItemId.AUDIO,
-		label: 'Audio Files',
+		label: t('Audio Files'),
 		icon: FILE_TYPE_ICONS.audio,
 		class: 'audio-button',
 		enabledWhen: AttachmentItemEnabledWhen.HAS_AUDIO_MODALITY,
-		disabledTooltip: 'Audio files processing requires an audio model',
+		disabledTooltip: t('Audio files processing requires an audio model'),
 		action: AttachmentAction.FILE_UPLOAD
 	},
 	{
 		id: AttachmentMenuItemId.VIDEO,
-		label: 'Video Files',
+		label: t('Video Files'),
 		icon: FILE_TYPE_ICONS.video,
 		class: 'video-button',
 		enabledWhen: AttachmentItemEnabledWhen.HAS_VIDEO_MODALITY,
-		disabledTooltip: 'Video files processing requires a video model',
+		disabledTooltip: t('Video files processing requires a video model'),
 		action: AttachmentAction.FILE_UPLOAD
 	},
 	{
 		id: AttachmentMenuItemId.TEXT,
-		label: 'Text Files',
+		label: t('Text Files'),
 		icon: FILE_TYPE_ICONS.text,
 		enabledWhen: AttachmentItemEnabledWhen.ALWAYS,
 		action: AttachmentAction.FILE_UPLOAD
 	},
 	{
 		id: AttachmentMenuItemId.PDF,
-		label: 'PDF Files',
+		label: t('PDF Files'),
 		icon: FILE_TYPE_ICONS.pdf,
 		enabledWhen: AttachmentItemEnabledWhen.ALWAYS,
-		disabledTooltip: 'PDFs will be converted to text. Image-based PDFs may not work properly.',
+		disabledTooltip: t('PDFs will be converted to text. Image-based PDFs may not work properly.'),
 		hasEnabledTooltip: true,
 		action: AttachmentAction.FILE_UPLOAD
 	}
@@ -84,7 +94,7 @@ export const ATTACHMENT_EXTRA_ITEMS: AttachmentMenuItem[] = [];
 export const ATTACHMENT_PROMPT_ITEMS: AttachmentMenuItem[] = [
 	{
 		id: AttachmentMenuItemId.SYSTEM_MESSAGE,
-		label: 'System Message',
+		label: t('System Message'),
 		icon: MessageSquare,
 		enabledWhen: AttachmentItemEnabledWhen.ALWAYS,
 		hasEnabledTooltip: true,
@@ -92,7 +102,7 @@ export const ATTACHMENT_PROMPT_ITEMS: AttachmentMenuItem[] = [
 	},
 	{
 		id: AttachmentMenuItemId.MCP_PROMPT,
-		label: 'MCP Prompt',
+		label: t('MCP Prompt'),
 		icon: Zap,
 		enabledWhen: AttachmentItemEnabledWhen.ALWAYS,
 		action: AttachmentAction.MCP_PROMPT_CLICK,
@@ -103,7 +113,7 @@ export const ATTACHMENT_PROMPT_ITEMS: AttachmentMenuItem[] = [
 export const ATTACHMENT_MCP_ITEMS: AttachmentMenuItem[] = [
 	{
 		id: AttachmentMenuItemId.MCP_RESOURCES,
-		label: 'MCP Resources',
+		label: t('MCP Resources'),
 		icon: FolderOpen,
 		enabledWhen: AttachmentItemEnabledWhen.ALWAYS,
 		action: AttachmentAction.MCP_RESOURCES_CLICK,
@@ -111,4 +121,4 @@ export const ATTACHMENT_MCP_ITEMS: AttachmentMenuItem[] = [
 	}
 ];
 
-export const ATTACHMENT_TOOLTIP_TEXT = 'Add files, prompts, tools or MCP Servers';
+export const ATTACHMENT_TOOLTIP_TEXT = t('Add files, prompts, tools or MCP Servers');

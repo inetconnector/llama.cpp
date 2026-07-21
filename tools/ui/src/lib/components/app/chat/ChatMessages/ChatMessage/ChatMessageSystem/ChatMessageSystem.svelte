@@ -8,6 +8,7 @@
 	import { KeyboardKey, MessageRole } from '$lib/enums';
 	import { config } from '$lib/stores/settings.svelte';
 	import { isIMEComposing } from '$lib/utils';
+	import { t } from '$lib/i18n';
 
 	interface Props {
 		class?: string;
@@ -98,7 +99,7 @@
 </script>
 
 <div
-	aria-label="System message with actions"
+	aria-label={t('System message with actions')}
 	class="group flex flex-col items-end gap-3 md:gap-2 {className}"
 	role="group"
 >
@@ -110,14 +111,14 @@
 				class="min-h-[60px] w-full resize-none rounded-2xl px-3 py-2 text-sm {INPUT_CLASSES}"
 				onkeydown={handleEditKeydown}
 				oninput={(e) => editCtx.setContent(e.currentTarget.value)}
-				placeholder="Edit system message..."
+				placeholder={t('Edit system message...')}
 			></textarea>
 
 			<div class="mt-2 flex justify-end gap-2">
 				<Button class="h-8 px-3" onclick={editCtx.cancel} size="sm" variant="outline">
 					<X class="mr-1 h-3 w-3" />
 
-					Cancel
+					{t('Cancel')}
 				</Button>
 
 				<Button
@@ -128,7 +129,7 @@
 				>
 					<Check class="mr-1 h-3 w-3" />
 
-					Save
+					{t('Save')}
 				</Button>
 			</div>
 		</div>
@@ -184,7 +185,7 @@
 										size="sm"
 										variant="outline"
 									>
-										Show full system message
+										{t('Show full system message')}
 									</Button>
 								</div>
 							{/if}
@@ -201,7 +202,7 @@
 									size="sm"
 									variant="outline"
 								>
-									Collapse System Message
+									{t('Collapse System Message')}
 								</Button>
 							</div>
 						{/if}

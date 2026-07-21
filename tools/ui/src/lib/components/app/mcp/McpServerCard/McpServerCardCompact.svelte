@@ -10,6 +10,7 @@
 	import type { MCPServerDisplayInfo, HealthCheckState, MCPServerSettingsEntry } from '$lib/types';
 	import { onMount } from 'svelte';
 	import { MCP_CARD_VISIBLE_TOOL_LIMIT, NEWLINE } from '$lib/constants';
+	import { t } from '$lib/i18n';
 
 	interface Props {
 		server: MCPServerDisplayInfo & { description?: string };
@@ -129,7 +130,7 @@
 
 						<Tooltip.Content>
 							<p class="max-w-xs text-xs">
-								{tool.description ?? 'No description'}
+								{tool.description ?? t('No description')}
 							</p>
 						</Tooltip.Content>
 					</Tooltip.Root>
@@ -139,7 +140,7 @@
 					<Tooltip.Root>
 						<Tooltip.Trigger>
 							<Badge variant="secondary" class="h-5 px-2 text-[11px] text-muted-foreground">
-								+ {hiddenToolCount} more tools
+								{t('+ {{count}} more tools', { count: hiddenToolCount })}
 							</Badge>
 						</Tooltip.Trigger>
 

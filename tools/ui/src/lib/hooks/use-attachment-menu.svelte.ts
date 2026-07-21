@@ -11,6 +11,7 @@ export interface AttachmentModalityFlags {
 
 export interface AttachmentActionCallbacks {
 	onFileUpload?: () => void;
+	onPhotoClick?: () => void;
 	onSystemPromptClick?: () => void;
 	onMcpPromptClick?: () => void;
 	onMcpResourcesClick?: () => void;
@@ -49,6 +50,7 @@ export function useAttachmentMenu(
 		};
 		return {
 			[AttachmentAction.FILE_UPLOAD]: wrap(cbs.onFileUpload),
+			[AttachmentAction.PHOTO_CLICK]: wrap(cbs.onPhotoClick),
 			[AttachmentAction.SYSTEM_PROMPT_CLICK]: wrap(cbs.onSystemPromptClick),
 			[AttachmentAction.MCP_PROMPT_CLICK]: wrap(cbs.onMcpPromptClick),
 			[AttachmentAction.MCP_RESOURCES_CLICK]: wrap(cbs.onMcpResourcesClick)

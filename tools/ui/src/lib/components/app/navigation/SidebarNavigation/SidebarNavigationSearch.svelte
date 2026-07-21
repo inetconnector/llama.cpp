@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { SearchInput } from '$lib/components/app';
+	import { t } from '$lib/i18n';
 
 	interface Props {
 		value?: string;
@@ -10,7 +11,7 @@
 
 	let {
 		value = $bindable(''),
-		placeholder = 'Search conversations...',
+		placeholder = t('Search conversations...'),
 		onInput,
 		class: className
 	}: Props = $props();

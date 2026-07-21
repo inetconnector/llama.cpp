@@ -2,6 +2,7 @@
 #include <jni.h>
 #include <iomanip>
 #include <cmath>
+#include <cstring>
 #include <string>
 #include <unistd.h>
 #include <sampling.h>
@@ -21,6 +22,53 @@ static std::string join(const std::vector<T> &values, const std::string &delim) 
     return str.str();
 }
 
+static bool is_backend_registry_named(ggml_backend_dev_t dev, const char * expected_name) {
+    if (!dev || !expected_name) {
+        return false;
+    }
+
+    ggml_backend_reg_t reg = ggml_backend_dev_backend_reg(dev);
+    if (!reg) {
+        return false;
+    }
+
+    const char * actual_name = ggml_backend_reg_name(reg);
+    return actual_name != nullptr && std::strcmp(actual_name, expected_name) == 0;
+}
+
+static std::string list_non_cpu_backends() {
+    std::vector<std::string> backends;
+    for (size_t i = 0; i < ggml_backend_reg_count(); i++) {
+        auto * reg = ggml_backend_reg_get(i);
+        if (!reg) {
+            continue;
+        }
+
+        std::string name = ggml_backend_reg_name(reg);
+        if (name != "CPU") {
+            backends.push_back(name);
+        }
+    }
+    return backends.empty() ? "CPU" : join(backends, ",");
+}
+
+static std::vector<ggml_backend_dev_t> preferred_model_devices() {
+    std::vector<ggml_backend_dev_t> opencl_devices;
+
+    for (size_t i = 0; i < ggml_backend_dev_count(); ++i) {
+        auto * dev = ggml_backend_dev_get(i);
+        if (!dev || ggml_backend_dev_type(dev) == GGML_BACKEND_DEVICE_TYPE_CPU) {
+            continue;
+        }
+
+        if (is_backend_registry_named(dev, "OpenCL")) {
+            opencl_devices.push_back(dev);
+        }
+    }
+
+    return opencl_devices;
+}
+
 /**
  * LLama resources: context, model, batch and sampler
  */
@@ -38,6 +86,50 @@ static llama_context                    * g_context;
 static llama_batch                        g_batch;
 static common_chat_templates_ptr          g_chat_templates;
 static common_sampler                   * g_sampler;
+static bool                               g_batch_initialized = false;
+
+static std::string trim_copy(const std::string &text) {
+    const auto first = text.find_first_not_of(" \t\r\n");
+    if (first == std::string::npos) {
+        return "";
+    }
+    const auto last = text.find_last_not_of(" \t\r\n");
+    return text.substr(first, last - first + 1);
+}
+
+static std::string strip_model_tags(std::string text) {
+    auto remove_block = [&](const std::string &open_tag, const std::string &close_tag) {
+        size_t start = 0;
+        while ((start = text.find(open_tag, start)) != std::string::npos) {
+            const size_t end = text.find(close_tag, start + open_tag.size());
+            if (end == std::string::npos) {
+                text.erase(start);
+                break;
+            }
+            text.erase(start, end + close_tag.size() - start);
+        }
+    };
+
+    remove_block("<|channel>thought", "<channel|>");
+    remove_block("<think>", "</think>");
+    remove_block("<|think|>", "</|think|>");
+
+    const char *tokens_to_remove[] = {
+        "<|channel>thought",
+        "<channel|>",
+        "<think>",
+        "</think>",
+        "Thinking Process:"
+    };
+    for (const char *token: tokens_to_remove) {
+        size_t pos = 0;
+        while ((pos = text.find(token, pos)) != std::string::npos) {
+            text.erase(pos, std::strlen(token));
+        }
+    }
+
+    return trim_copy(text);
+}
 
 extern "C"
 JNIEXPORT void JNICALL
@@ -53,6 +145,7 @@ Java_com_arm_aichat_internal_InferenceEngineImpl_init(JNIEnv *env, jobject /*unu
 
     // Initialize backends
     llama_backend_init();
+    LOGi("Available backends after init: %s", list_non_cpu_backends().c_str());
     LOGi("Backend initiated; Log handler set.");
 }
 
@@ -60,6 +153,16 @@ extern "C"
 JNIEXPORT jint JNICALL
 Java_com_arm_aichat_internal_InferenceEngineImpl_load(JNIEnv *env, jobject, jstring jmodel_path) {
     llama_model_params model_params = llama_model_default_params();
+    model_params.n_gpu_layers = 99;
+    model_params.split_mode = LLAMA_SPLIT_MODE_LAYER;
+    auto opencl_devices = preferred_model_devices();
+    if (!opencl_devices.empty()) {
+        opencl_devices.push_back(nullptr);
+        model_params.devices = opencl_devices.data();
+        LOGi("OpenCL backend detected; preferring %zu OpenCL device(s) for model offload.", opencl_devices.size() - 1);
+    } else {
+        LOGi("No OpenCL device detected; using llama.cpp default device selection.");
+    }
 
     const auto *model_path = env->GetStringUTFChars(jmodel_path, 0);
     LOGd("%s: Loading model from: \n%s\n", __func__, model_path);
@@ -117,21 +220,14 @@ Java_com_arm_aichat_internal_InferenceEngineImpl_prepare(JNIEnv * /*env*/, jobje
     if (!context) { return 1; }
     g_context = context;
     g_batch = llama_batch_init(BATCH_SIZE, 0, 1);
+    g_batch_initialized = true;
     g_chat_templates = common_chat_templates_init(g_model, "");
     g_sampler = new_sampler(DEFAULT_SAMPLER_TEMP);
     return 0;
 }
 
 static std::string get_backend() {
-    std::vector<std::string> backends;
-    for (size_t i = 0; i < ggml_backend_reg_count(); i++) {
-        auto *reg = ggml_backend_reg_get(i);
-        std::string name = ggml_backend_reg_name(reg);
-        if (name != "CPU") {
-            backends.push_back(ggml_backend_reg_name(reg));
-        }
-    }
-    return backends.empty() ? "CPU" : join(backends, ",");
+    return list_non_cpu_backends();
 }
 
 extern "C"
@@ -265,7 +361,7 @@ static void reset_long_term_states(const bool clear_kv_cache = true) {
     system_prompt_position = 0;
     current_position = 0;
 
-    if (clear_kv_cache)
+    if (clear_kv_cache && g_context)
         llama_memory_clear(llama_get_memory(g_context), false);
 }
 
@@ -278,6 +374,10 @@ static void reset_long_term_states(const bool clear_kv_cache = true) {
  * - recompute the logits in batches
  */
 static void shift_context() {
+    if (!g_context) {
+        LOGw("%s: Skipping context shift because the llama context is not ready", __func__);
+        return;
+    }
     const int n_discard = (current_position - system_prompt_position) / 2;
     LOGi("%s: Discarding %d tokens", __func__, n_discard);
     llama_memory_seq_rm(llama_get_memory(g_context), 0, system_prompt_position, system_prompt_position + n_discard);
@@ -290,11 +390,19 @@ static std::string chat_add_and_format(const std::string &role, const std::strin
     common_chat_msg new_msg;
     new_msg.role = role;
     new_msg.content = content;
-    auto formatted = common_chat_format_single(
-            g_chat_templates.get(), chat_msgs, new_msg, role == ROLE_USER, /* use_jinja */ false);
-    chat_msgs.push_back(new_msg);
-    LOGi("%s: Formatted and added %s message: \n%s\n", __func__, role.c_str(), formatted.c_str());
-    return formatted;
+    const bool has_chat_template = common_chat_templates_was_explicit(g_chat_templates.get());
+    try {
+        auto formatted = common_chat_format_single(
+                g_chat_templates.get(), chat_msgs, new_msg, role == ROLE_USER, /* use_jinja */ has_chat_template);
+        chat_msgs.push_back(new_msg);
+        LOGi("%s: Formatted and added %s message: \n%s\n", __func__, role.c_str(), formatted.c_str());
+        return formatted;
+    } catch (const std::exception &e) {
+        LOGw("%s: Chat template formatting failed for %s message, using raw content instead: %s",
+             __func__, role.c_str(), e.what());
+        chat_msgs.push_back(new_msg);
+        return content;
+    }
 }
 
 /**
@@ -357,46 +465,52 @@ Java_com_arm_aichat_internal_InferenceEngineImpl_processSystemPrompt(
         jobject /*unused*/,
         jstring jsystem_prompt
 ) {
-    // Reset long-term & short-term states
-    reset_long_term_states();
-    reset_short_term_states();
+    try {
+        // Reset long-term & short-term states
+        reset_long_term_states();
+        reset_short_term_states();
 
-    // Obtain system prompt from JEnv
-    const auto *system_prompt = env->GetStringUTFChars(jsystem_prompt, nullptr);
-    LOGd("%s: System prompt received: \n%s", __func__, system_prompt);
-    std::string formatted_system_prompt(system_prompt);
+        // Obtain system prompt from JEnv
+        const auto *system_prompt = env->GetStringUTFChars(jsystem_prompt, nullptr);
+        LOGd("%s: System prompt received: \n%s", __func__, system_prompt);
+        std::string system_prompt_text(system_prompt);
+        env->ReleaseStringUTFChars(jsystem_prompt, system_prompt);
 
-    // Format system prompt if applicable
-    const bool has_chat_template = common_chat_templates_was_explicit(g_chat_templates.get());
-    if (has_chat_template) {
-        formatted_system_prompt = chat_add_and_format(ROLE_SYSTEM, system_prompt);
+        // Format system prompt if applicable
+        const bool has_chat_template = common_chat_templates_was_explicit(g_chat_templates.get());
+        std::string formatted_system_prompt(system_prompt_text);
+        if (has_chat_template) {
+            formatted_system_prompt = chat_add_and_format(ROLE_SYSTEM, system_prompt_text);
+        }
+
+        // Tokenize system prompt
+        const auto system_tokens = common_tokenize(g_context, formatted_system_prompt,
+                                                   has_chat_template, has_chat_template);
+        for (auto id: system_tokens) {
+            LOGv("token: `%s`\t -> `%d`", common_token_to_piece(g_context, id).c_str(), id);
+        }
+
+        // Handle context overflow
+        const int max_batch_size = DEFAULT_CONTEXT_SIZE - OVERFLOW_HEADROOM;
+        if ((int) system_tokens.size() > max_batch_size) {
+            LOGe("%s: System prompt too long for context! %d tokens, max: %d",
+                 __func__, (int) system_tokens.size(), max_batch_size);
+            return 1;
+        }
+
+        // Decode system tokens in batches
+        if (decode_tokens_in_batches(g_context, g_batch, system_tokens, current_position)) {
+            LOGe("%s: llama_decode() failed!", __func__);
+            return 2;
+        }
+
+        // Update position
+        system_prompt_position = current_position = (int) system_tokens.size();
+        return 0;
+    } catch (const std::exception &e) {
+        LOGe("%s: failed: %s", __func__, e.what());
+        return 3;
     }
-    env->ReleaseStringUTFChars(jsystem_prompt, system_prompt);
-
-    // Tokenize system prompt
-    const auto system_tokens = common_tokenize(g_context, formatted_system_prompt,
-                                               has_chat_template, has_chat_template);
-    for (auto id: system_tokens) {
-        LOGv("token: `%s`\t -> `%d`", common_token_to_piece(g_context, id).c_str(), id);
-    }
-
-    // Handle context overflow
-    const int max_batch_size = DEFAULT_CONTEXT_SIZE - OVERFLOW_HEADROOM;
-    if ((int) system_tokens.size() > max_batch_size) {
-        LOGe("%s: System prompt too long for context! %d tokens, max: %d",
-             __func__, (int) system_tokens.size(), max_batch_size);
-        return 1;
-    }
-
-    // Decode system tokens in batches
-    if (decode_tokens_in_batches(g_context, g_batch, system_tokens, current_position)) {
-        LOGe("%s: llama_decode() failed!", __func__);
-        return 2;
-    }
-
-    // Update position
-    system_prompt_position = current_position = (int) system_tokens.size();
-    return 0;
 }
 
 extern "C"
@@ -407,46 +521,54 @@ Java_com_arm_aichat_internal_InferenceEngineImpl_processUserPrompt(
         jstring juser_prompt,
         jint n_predict
 ) {
-    // Reset short-term states
-    reset_short_term_states();
+    try {
+        // Reset short-term states
+        reset_short_term_states();
 
-    // Obtain and tokenize user prompt
-    const auto *const user_prompt = env->GetStringUTFChars(juser_prompt, nullptr);
-    LOGd("%s: User prompt received: \n%s", __func__, user_prompt);
-    std::string formatted_user_prompt(user_prompt);
+        // Obtain and tokenize user prompt
+        const auto *const user_prompt = env->GetStringUTFChars(juser_prompt, nullptr);
+        LOGd("%s: User prompt received: \n%s", __func__, user_prompt);
+        std::string user_prompt_text(user_prompt);
+        env->ReleaseStringUTFChars(juser_prompt, user_prompt);
 
-    // Format user prompt if applicable
-    const bool has_chat_template = common_chat_templates_was_explicit(g_chat_templates.get());
-    if (has_chat_template) {
-        formatted_user_prompt = chat_add_and_format(ROLE_USER, user_prompt);
+        // Format user prompt if applicable
+        const bool has_chat_template = common_chat_templates_was_explicit(g_chat_templates.get());
+        std::string formatted_user_prompt(user_prompt_text);
+        if (has_chat_template) {
+            formatted_user_prompt = chat_add_and_format(ROLE_USER, user_prompt_text);
+        }
+
+        // Decode formatted user prompts
+        auto user_tokens = common_tokenize(g_context, formatted_user_prompt, has_chat_template, has_chat_template);
+        for (auto id: user_tokens) {
+            LOGv("token: `%s`\t -> `%d`", common_token_to_piece(g_context, id).c_str(), id);
+        }
+
+        // Ensure user prompt doesn't exceed the context size by truncating if necessary.
+        const int user_prompt_size = (int) user_tokens.size();
+        const int max_batch_size = DEFAULT_CONTEXT_SIZE - OVERFLOW_HEADROOM;
+        if (user_prompt_size > max_batch_size) {
+            const int skipped_tokens = user_prompt_size - max_batch_size;
+            user_tokens.resize(max_batch_size);
+            LOGw("%s: User prompt too long! Skipped %d tokens!", __func__, skipped_tokens);
+        }
+
+        // Decode user tokens in batches
+        if (decode_tokens_in_batches(g_context, g_batch, user_tokens, current_position, true)) {
+            LOGe("%s: llama_decode() failed!", __func__);
+            return 2;
+        }
+
+        // Update position based on the actual tokens that were decoded.
+        // The previous logic added the prompt length twice, which could keep
+        // generation running much longer than intended on long prompts.
+        current_position += (int) user_tokens.size();
+        stop_generation_position = current_position + n_predict;
+        return 0;
+    } catch (const std::exception &e) {
+        LOGe("%s: failed: %s", __func__, e.what());
+        return 3;
     }
-    env->ReleaseStringUTFChars(juser_prompt, user_prompt);
-
-    // Decode formatted user prompts
-    auto user_tokens = common_tokenize(g_context, formatted_user_prompt, has_chat_template, has_chat_template);
-    for (auto id: user_tokens) {
-        LOGv("token: `%s`\t -> `%d`", common_token_to_piece(g_context, id).c_str(), id);
-    }
-
-    // Ensure user prompt doesn't exceed the context size by truncating if necessary.
-    const int user_prompt_size = (int) user_tokens.size();
-    const int max_batch_size = DEFAULT_CONTEXT_SIZE - OVERFLOW_HEADROOM;
-    if (user_prompt_size > max_batch_size) {
-        const int skipped_tokens = user_prompt_size - max_batch_size;
-        user_tokens.resize(max_batch_size);
-        LOGw("%s: User prompt too long! Skipped %d tokens!", __func__, skipped_tokens);
-    }
-
-    // Decode user tokens in batches
-    if (decode_tokens_in_batches(g_context, g_batch, user_tokens, current_position, true)) {
-        LOGe("%s: llama_decode() failed!", __func__);
-        return 2;
-    }
-
-    // Update position
-    current_position += user_prompt_size;
-    stop_generation_position = current_position + user_prompt_size + n_predict;
-    return 0;
 }
 
 static bool is_valid_utf8(const char *string) {
@@ -519,7 +641,7 @@ Java_com_arm_aichat_internal_InferenceEngineImpl_generateNextToken(
     // Stop if next token is EOG
     if (llama_vocab_is_eog(llama_model_get_vocab(g_model), new_token_id)) {
         LOGd("id: %d,\tIS EOG!\nSTOP.", new_token_id);
-        chat_add_and_format(ROLE_ASSISTANT, assistant_ss.str());
+        chat_add_and_format(ROLE_ASSISTANT, strip_model_tags(assistant_ss.str()));
         return nullptr;
     }
 
@@ -551,11 +673,24 @@ Java_com_arm_aichat_internal_InferenceEngineImpl_unload(JNIEnv * /*unused*/, job
     reset_short_term_states();
 
     // Free up resources
-    common_sampler_free(g_sampler);
+    if (g_sampler) {
+        common_sampler_free(g_sampler);
+        g_sampler = nullptr;
+    }
     g_chat_templates.reset();
-    llama_batch_free(g_batch);
-    llama_free(g_context);
-    llama_model_free(g_model);
+    if (g_batch_initialized) {
+        llama_batch_free(g_batch);
+        g_batch = {};
+        g_batch_initialized = false;
+    }
+    if (g_context) {
+        llama_free(g_context);
+        g_context = nullptr;
+    }
+    if (g_model) {
+        llama_model_free(g_model);
+        g_model = nullptr;
+    }
 }
 
 extern "C"

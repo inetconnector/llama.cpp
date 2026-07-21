@@ -17,6 +17,7 @@
 	import { conversationsStore, activeMessages } from '$lib/stores/conversations.svelte';
 	import { isRouterMode } from '$lib/stores/server.svelte';
 	import type { DatabaseMessage } from '$lib/types/database';
+	import { t } from '$lib/i18n';
 
 	let subOpen = $state(false);
 
@@ -77,10 +78,10 @@
 			{/if}
 
 			<span class="text-sm inline-flex gap-2 {!thinkingEnabled ? 'text-muted-foreground' : ''}">
-				Reasoning
+				{t('Thinking')}
 
 				<span class="capitalize text-muted-foreground">
-					{thinkingEnabled ? currentEffort : 'off'}
+					{thinkingEnabled ? currentEffort : t('off')}
 				</span>
 			</span>
 		</DropdownMenu.SubTrigger>
@@ -106,8 +107,10 @@
 					{#if !level.isOff}
 						<span class="text-[11px] text-muted-foreground opacity-60">
 							{REASONING_EFFORT_TOKENS[level.value] === -1
-								? 'Unlimited'
-								: `Max ${REASONING_EFFORT_TOKENS[level.value].toLocaleString()} tokens`}
+								? t('Unlimited')
+								: t('Max {{count}} tokens', {
+										count: REASONING_EFFORT_TOKENS[level.value].toLocaleString()
+									})}
 						</span>
 					{/if}
 
@@ -117,7 +120,7 @@
 								<Info class="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
 							</Tooltip.Trigger>
 							<Tooltip.Content side="left">
-								<p>Maximum reasoning effort with extended context usage</p>
+								<p>{t('Maximum thinking effort with extended context usage')}</p>
 							</Tooltip.Content>
 						</Tooltip.Root>
 					{/if}

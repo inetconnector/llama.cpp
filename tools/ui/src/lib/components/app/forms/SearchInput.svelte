@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { Input } from '$lib/components/ui/input';
 	import { Search, X } from '@lucide/svelte';
+	import { t } from '$lib/i18n';
 
 	interface Props {
 		autofocus?: boolean;
@@ -18,7 +19,7 @@
 	let {
 		autofocus,
 		value = $bindable(''),
-		placeholder = 'Search...',
+		placeholder = t('Search...'),
 		onInput,
 		onClose,
 		onKeyDown,
@@ -66,11 +67,11 @@
 	/>
 
 	{#if showClearButton}
-		<button
+	<button
 			type="button"
 			class="absolute top-1/2 right-3 -translate-y-1/2 transform cursor-pointer text-muted-foreground transition-colors hover:text-foreground"
 			onclick={handleClear}
-			aria-label={value ? 'Clear search' : 'Close'}
+			aria-label={value ? t('Clear search') : t('Close')}
 		>
 			<X class="h-4 w-4" />
 		</button>

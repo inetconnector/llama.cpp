@@ -12,6 +12,7 @@
 	} from '$lib/utils';
 	import { MimeTypeIncludes, MimeTypeText } from '$lib/enums';
 	import { DEFAULT_RESOURCE_FILENAME } from '$lib/constants';
+	import { t } from '$lib/i18n';
 	import type { DatabaseMessageExtraMcpResource } from '$lib/types';
 
 	interface Props {
@@ -83,7 +84,7 @@
 			<ActionIconCopyToClipboard
 				text={extra.content}
 				canCopy={!!extra.content}
-				ariaLabel="Copy content"
+				ariaLabel={t('Copy content')}
 			/>
 
 			<Button
@@ -92,7 +93,7 @@
 				class="h-7 w-7 p-0"
 				onclick={handleDownload}
 				disabled={!extra.content}
-				title="Download content"
+				title={t('Download content')}
 			>
 				<Download class="h-3.5 w-3.5" />
 			</Button>
@@ -115,7 +116,7 @@
 				<pre
 					class="max-h-[70vh] overflow-auto rounded-md border bg-muted/30 p-4 font-mono text-sm break-words whitespace-pre-wrap">{extra.content}</pre>
 			{:else}
-				<div class="py-8 text-center text-sm text-muted-foreground">No content available</div>
+				<div class="py-8 text-center text-sm text-muted-foreground">{t('No content available')}</div>
 			{/if}
 		</div>
 	</Dialog.Content>

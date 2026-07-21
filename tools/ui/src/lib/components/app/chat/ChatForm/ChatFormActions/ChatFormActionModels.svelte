@@ -10,6 +10,7 @@
 	import { ModelsSelectorDropdown, ModelsSelectorSheet } from '$lib/components/app';
 	import { isMobile } from '$lib/stores/viewport.svelte';
 	import { activeMessages } from '$lib/stores/conversations.svelte';
+	import { t } from '$lib/i18n';
 
 	interface Props {
 		disabled?: boolean;
@@ -158,9 +159,9 @@
 
 	$effect(() => {
 		if (!hasModelSelected) {
-			submitTooltip = 'Please select a model first';
+			submitTooltip = t('Please select a model first');
 		} else if (!isSelectedModelInCache) {
-			submitTooltip = 'Selected model is not available, please select another';
+			submitTooltip = t('Selected model is not available, please select another');
 		} else {
 			submitTooltip = '';
 		}

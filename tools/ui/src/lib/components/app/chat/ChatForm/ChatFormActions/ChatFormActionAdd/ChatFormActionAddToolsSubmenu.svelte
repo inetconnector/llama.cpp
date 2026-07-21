@@ -6,18 +6,17 @@
 	import * as Tooltip from '$lib/components/ui/tooltip';
 	import { toolsStore } from '$lib/stores/tools.svelte';
 	import { CLI_FLAGS } from '$lib/constants';
-	import { mcpStore } from '$lib/stores/mcp.svelte';
 	import { useToolsPanel } from '$lib/hooks/use-tools-panel.svelte';
+	import { t } from '$lib/i18n';
 
 	const toolsPanel = useToolsPanel();
-	const hasMcpServersAvailable = $derived(mcpStore.getServersSorted().length > 0);
 </script>
 
 <DropdownMenu.Sub onOpenChange={(open) => open && toolsPanel.handleOpen()}>
 	<DropdownMenu.SubTrigger class="flex cursor-pointer items-center gap-2">
 		<PencilRuler class="h-4 w-4" />
 
-		<span>Tools</span>
+		<span>{t('Tools')}</span>
 	</DropdownMenu.SubTrigger>
 
 	<DropdownMenu.SubContent class="w-72 p-0">
@@ -26,7 +25,7 @@
 				<div class="px-3 py-4 text-center text-sm text-muted-foreground">
 					<Loader2 class="mx-auto mb-1 h-4 w-4 animate-spin" />
 
-					Loading tools...
+					{t('Loading tools...')}
 				</div>
 			{:else if toolsStore.isToolsEndpointUnreachable}
 				<div class="grid gap-2.5 px-3 py-4 text-sm text-muted-foreground">
@@ -34,9 +33,7 @@
 						<Info class="mt-0.5 h-4 w-4 shrink-0" />
 
 						<span>
-							Run llama-server with <code>{CLI_FLAGS.TOOLS}</code> flag to enable
-
-							<strong>Built-in Tools</strong>.
+							{t('Run llama-server with <code>--tools</code> flag to enable <strong>Built-in Tools</strong>.')}
 						</span>
 					</span>
 
@@ -44,14 +41,14 @@
 						<Info class="mt-0.5 h-4 w-4 shrink-0" />
 
 						<span>
-							{hasMcpServersAvailable ? 'Enable' : 'Add'} MCP Server(s) to access
-
-							<strong>MCP Tools</strong>.
+							{t('Add or enable MCP Server(s) to access <strong>MCP Tools</strong>.')}
 						</span>
 					</span>
 				</div>
 			{:else if toolsStore.error}
-				<div class="px-3 py-4 text-center text-sm text-muted-foreground">Failed to load tools</div>
+				<div class="px-3 py-4 text-center text-sm text-muted-foreground">
+					{t('Failed to load tools')}
+				</div>
 			{:else if toolsPanel.noToolsInfoMessage}
 				<div class="flex gap-2 px-3 py-4 text-sm text-muted-foreground">
 					<Info class="mt-0.5 h-4 w-4 shrink-0" />
@@ -59,7 +56,9 @@
 					<span>{toolsPanel.noToolsInfoMessage}</span>
 				</div>
 			{:else}
-				<div class="px-3 py-4 text-center text-sm text-muted-foreground">No tools available</div>
+				<div class="px-3 py-4 text-center text-sm text-muted-foreground">
+					{t('No tools available')}
+				</div>
 			{/if}
 		{:else}
 			<div class="max-h-80 overflow-y-auto p-2 pr-1">
@@ -116,8 +115,8 @@
 
 								<Tooltip.Content side="right">
 									<p>
-										{checked ? 'Disable' : 'Enable'}
-										{group.tools.length} tool{group.tools.length !== 1 ? 's' : ''}
+										{checked ? t('Disable') : t('Enable')}
+										{group.tools.length}
 									</p>
 								</Tooltip.Content>
 							</Tooltip.Root>

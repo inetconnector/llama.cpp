@@ -20,6 +20,7 @@
 	import { TooltipSide } from '$lib/enums';
 	import { device } from '$lib/stores/device.svelte';
 	import { circIn } from 'svelte/easing';
+	import { t } from '$lib/i18n';
 
 	interface Props {
 		onSearchClick?: () => void;
@@ -189,9 +190,9 @@
 						: 'bg-transparent!'} md:h-9 md:w-9 h-10 w-10 rounded-full md:hover:bg-foreground/10! pointer-events-auto"
 					href={isExpandedMode ? ROUTES.START : undefined}
 					onclick={isExpandedMode ? undefined : toggleExpandedMode}
-					tooltip={isExpandedMode ? undefined : 'Open Sidebar'}
+					tooltip={isExpandedMode ? undefined : t('Open Sidebar')}
 					tooltipSide={TooltipSide.RIGHT}
-					ariaLabel={isExpandedMode ? 'Go to start' : 'Expand navigation'}
+					ariaLabel={isExpandedMode ? t('Go to start') : t('Expand navigation')}
 				/>
 			</div>
 
@@ -210,9 +211,9 @@
 						iconSize="h-4.5 w-4.5 md:h-4 md:w-4"
 						class="backdrop-blur-none md:h-9 md:w-9 h-10 w-10 rounded-full mr-1 hover:bg-accent!"
 						onclick={toggleExpandedMode}
-						tooltip="Close Sidebar"
+						tooltip={t('Close Sidebar')}
 						tooltipSide={TooltipSide.LEFT}
-						ariaLabel="Collapse navigation"
+						ariaLabel={t('Collapse navigation')}
 					/>
 				</div>
 			{/if}

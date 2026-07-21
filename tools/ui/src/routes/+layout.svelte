@@ -27,11 +27,12 @@
 	import { FAVICON_PATHS, FAVICON_SELECTORS } from '$lib/constants/pwa';
 	import { useKeyboardShortcuts } from '$lib/hooks/use-keyboard-shortcuts.svelte';
 	import { usePwa } from '$lib/hooks/use-pwa.svelte';
-	import { useMcpRecommendations } from '$lib/hooks/use-mcp-recommendations.svelte';
-	import { conversations } from '$lib/stores/conversations.svelte';
-	import { isMobile } from '$lib/stores/viewport.svelte';
-	import { theme } from '$lib/stores/theme.svelte';
-	import { buildInfoStore } from '$lib/stores/build-info.svelte';
+import { useMcpRecommendations } from '$lib/hooks/use-mcp-recommendations.svelte';
+import { conversations } from '$lib/stores/conversations.svelte';
+import { isMobile } from '$lib/stores/viewport.svelte';
+import { theme } from '$lib/stores/theme.svelte';
+import { buildInfoStore } from '$lib/stores/build-info.svelte';
+import { applyDocumentLocale } from '$lib/i18n';
 
 	import { SETTINGS_KEYS } from '$lib/constants';
 
@@ -158,6 +159,7 @@
 	}
 
 	onMount(() => {
+		applyDocumentLocale();
 		updateFavicon();
 		// snapshot of every backend running stream on first load, populates the sidebar spinners
 		// so the user sees each conv that has a live inference, even ones not opened yet

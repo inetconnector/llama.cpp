@@ -18,6 +18,7 @@
 	import { conversationsStore, activeMessages } from '$lib/stores/conversations.svelte';
 	import { isRouterMode } from '$lib/stores/server.svelte';
 	import type { DatabaseMessage } from '$lib/types/database';
+	import { t } from '$lib/i18n';
 
 	let thinkingEnabled = $derived(conversationsStore.getThinkingEnabled());
 	let currentEffort = $derived(conversationsStore.getReasoningEffort());
@@ -79,12 +80,12 @@
 				<LightbulbOff class="h-4 w-4 shrink-0 text-muted-foreground" />
 			{/if}
 
-			<span class="flex-1">Thinking</span>
+			<span class="flex-1">{t('Thinking')}</span>
 
 			{#if thinkingEnabled}
 				<span class="text-xs text-muted-foreground">{currentEffort}</span>
 			{:else}
-				<span class="text-xs text-muted-foreground">off</span>
+				<span class="text-xs text-muted-foreground">{t('off')}</span>
 			{/if}
 		</DropdownMenu.SubTrigger>
 
@@ -101,8 +102,10 @@
 					{#if !level.isOff}
 						<span class="text-[11px] text-muted-foreground opacity-60">
 							{REASONING_EFFORT_TOKENS[level.value] === -1
-								? 'Unlimited'
-								: `Max ${REASONING_EFFORT_TOKENS[level.value].toLocaleString()} tokens`}
+								? t('Unlimited')
+								: t('Max {{count}} tokens', {
+										count: REASONING_EFFORT_TOKENS[level.value].toLocaleString()
+									})}
 						</span>
 					{/if}
 
@@ -112,7 +115,7 @@
 								<Info class="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
 							</Tooltip.Trigger>
 							<Tooltip.Content side="left">
-								<p>Maximum thinking effort with extended context usage</p>
+								<p>{t('Maximum thinking effort with extended context usage')}</p>
 							</Tooltip.Content>
 						</Tooltip.Root>
 					{/if}

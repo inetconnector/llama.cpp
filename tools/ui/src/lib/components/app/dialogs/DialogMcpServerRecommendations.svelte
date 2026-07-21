@@ -12,6 +12,7 @@
 	import { MCP_SERVERS_ADDED_TO_CHAT_LOCALSTORAGE_KEY, MCP_SERVER_ID_PREFIX } from '$lib/constants';
 	import type { MCPServerSettingsEntry } from '$lib/types';
 	import { Plus } from '@lucide/svelte';
+	import { t } from '$lib/i18n';
 
 	interface Props {
 		open: boolean;
@@ -36,23 +37,24 @@
 		const custom = addedServers.length;
 		const total = recommended + custom;
 
-		if (total === 0) return 'Continue';
-		if (recommended === 0) return custom === 1 ? 'Add server' : `Add ${custom} servers`;
-		if (custom === 0) return recommended === 1 ? 'Add server' : `Add ${recommended} servers`;
-		return `Add ${recommended} servers and ${custom} custom`;
+		if (total === 0) return t('Continue');
+		if (recommended === 0) return custom === 1 ? t('Add server') : t('Add {{count}} servers', { count: custom });
+		if (custom === 0)
+			return recommended === 1 ? t('Add server') : t('Add {{count}} servers', { count: recommended });
+		return t('Add {{recommended}} servers and {{custom}} custom', { recommended, custom });
 	});
 
 	let showAddForm = $state(false);
 	let newServerUrl = $state('');
 	let newServerHeaders = $state('');
 	let newServerUrlError = $derived.by(() => {
-		if (!newServerUrl.trim()) return 'URL is required';
+		if (!newServerUrl.trim()) return t('URL is required');
 		try {
 			new URL(newServerUrl);
 
 			return null;
 		} catch {
-			return 'Invalid URL format';
+			return t('Invalid URL format');
 		}
 	});
 
@@ -132,15 +134,16 @@
 <Dialog.Root bind:open onOpenChange={handleOpenChange}>
 	<Dialog.Content class="sm:max-w-lg">
 		<Dialog.Header>
-			<Dialog.Title>Do more with MCP</Dialog.Title>
+			<Dialog.Title>{t('Do more with MCP')}</Dialog.Title>
 			<Dialog.Description>
-				Power-up your experience by adding tools, resources and more capabilities provided by MCP
-				servers.
+				{t(
+					'Power-up your experience by adding tools, resources and more capabilities provided by MCP servers.'
+				)}
 			</Dialog.Description>
 		</Dialog.Header>
 
 		<div class="max-h-[60vh] space-y-4 overflow-y-auto py-4" in:fly={{ y: 16, duration: 300 }}>
-			<h3 class="text-sm font-semibold">Quickly get started with</h3>
+			<h3 class="text-sm font-semibold">{t('Quickly get started with')}</h3>
 
 			{#each RECOMMENDED_MCP_SERVERS as server (server.id)}
 				<McpServerCardCompact
@@ -168,16 +171,16 @@
 					/>
 
 					<div class="flex justify-end gap-2 pt-2">
-						<Button variant="secondary" size="sm" onclick={resetAddForm}>Cancel</Button>
+						<Button variant="secondary" size="sm" onclick={resetAddForm}>{t('Cancel')}</Button>
 
 						<Button
 							variant="default"
 							size="sm"
 							onclick={saveNewServer}
 							disabled={!!newServerUrlError}
-							aria-label="Save"
+							aria-label={t('Save')}
 						>
-							Add
+							{t('Add')}
 						</Button>
 					</div>
 				</Card.Root>
@@ -187,23 +190,26 @@
 						type="button"
 						class="flex w-full items-center justify-center gap-2 rounded-lg p-6 text-sm text-muted-foreground transition-colors hover:text-foreground"
 						onclick={() => (showAddForm = true)}
-						aria-label="Add your own MCP server"
+						aria-label={t('Add your own MCP server')}
 					>
 						<Plus class="h-4 w-4" />
-						<span>Add your own server</span>
+						<span>{t('Add your own server')}</span>
 					</button>
 				</Card.Root>
 			{/if}
 		</div>
 
 		<Dialog.Footer>
-			<Button variant="secondary" size="sm" onclick={() => handleOpenChange(false)}>Not now</Button>
+			<Button variant="secondary" size="sm" onclick={() => handleOpenChange(false)}>
+				{t('Not now')}
+			</Button>
 
 			<Button
 				variant="default"
 				size="sm"
 				onclick={enableSelected}
-				disabled={footerLabel === 'Continue'}>{footerLabel}</Button
+				disabled={selectedRecommendedCount + addedServers.length === 0}
+				>{footerLabel}</Button
 			>
 		</Dialog.Footer>
 	</Dialog.Content>

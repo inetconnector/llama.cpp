@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/modelRowRoot"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/dialog_model_row_bg"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackground"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:padding="14dp">
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:paddingEnd="12dp">
+
+        <TextView
+            android:id="@+id/modelRowTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:maxLines="2"
+            android:textAppearance="?attr/textAppearanceBodyLarge"
+            android:textColor="@color/dialog_on_surface"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/modelRowMeta"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textAppearance="?attr/textAppearanceBodySmall"
+            android:textColor="@color/dialog_on_surface_variant" />
+    </LinearLayout>
+
+    <ImageButton
+        android:id="@+id/modelRowDeleteButton"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/dialog_model_delete_button"
+        android:padding="8dp"
+        android:scaleType="centerInside"
+        android:src="@android:drawable/ic_menu_delete"
+        android:tint="@color/dialog_error" />
+</LinearLayout>

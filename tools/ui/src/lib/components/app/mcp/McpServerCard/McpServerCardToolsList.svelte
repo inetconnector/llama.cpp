@@ -2,6 +2,7 @@
 	import { ChevronDown, ChevronRight } from '@lucide/svelte';
 	import * as Collapsible from '$lib/components/ui/collapsible';
 	import { Badge } from '$lib/components/ui/badge';
+	import { t } from '$lib/i18n';
 
 	interface Tool {
 		name: string;
@@ -28,7 +29,7 @@
 			<ChevronRight class="h-3.5 w-3.5" />
 		{/if}
 
-		<span>{toolsCount} tools available · Show details</span>
+		<span>{t('{{count}} tools available · Show details', { count: toolsCount })}</span>
 	</Collapsible.Trigger>
 
 	<Collapsible.Content class="mt-2">

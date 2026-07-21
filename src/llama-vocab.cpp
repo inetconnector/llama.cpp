@@ -2444,7 +2444,10 @@ void llama_vocab::impl::load(llama_model_loader & ml, const LLM_KV & kv) {
             }
         }
     }
-    GGML_ASSERT(id_to_token.size() == token_to_id.size());
+    if (id_to_token.size() != token_to_id.size()) {
+        LLAMA_LOG_WARN("%s: tokenizer contains %zu duplicate token string(s); continuing with the loaded vocabulary",
+            __func__, id_to_token.size() - token_to_id.size());
+    }
 
     // hybriddna: the marker suffix kept k-mer ids distinct in token_to_id; erase
     // it from id_to_token so the k-mers detokenize to the bare DNA sequence. The

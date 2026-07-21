@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="16dp"
+    android:background="@drawable/dialog_model_surface"
+    android:orientation="vertical"
+    android:padding="20dp">
+
+    <TextView
+        android:id="@+id/modelManagerTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAppearance="?attr/textAppearanceHeadlineSmall"
+        android:textColor="@color/dialog_on_surface"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/modelManagerSubtitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:textAppearance="?attr/textAppearanceBodyMedium"
+        android:textColor="@color/dialog_on_surface_variant" />
+
+    <TextView
+        android:id="@+id/modelManagerEmptyState"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:padding="16dp"
+        android:background="@drawable/dialog_model_row_bg"
+        android:textAppearance="?attr/textAppearanceBodyMedium"
+        android:textColor="@color/dialog_on_surface"
+        android:visibility="gone" />
+
+    <ListView
+        android:id="@+id/modelList"
+        android:layout_width="match_parent"
+        android:layout_height="220dp"
+        android:layout_marginTop="16dp"
+        android:divider="@android:color/transparent"
+        android:dividerHeight="10dp"
+        android:fadeScrollbars="false"
+        android:overScrollMode="never"
+        android:scrollbars="vertical" />
+
+    <TextView
+        android:id="@+id/modelManagerFooterHint"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:textAppearance="?attr/textAppearanceBodySmall"
+        android:textColor="@color/dialog_on_surface_variant" />
+
+    <TextView
+        android:id="@+id/modelManagerProblemTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:textAppearance="?attr/textAppearanceTitleSmall"
+        android:textColor="@color/dialog_on_surface"
+        android:textStyle="bold"
+        android:text="@string/dialog_model_problem_section_title" />
+
+    <TextView
+        android:id="@+id/modelManagerProblemSubtitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:textAppearance="?attr/textAppearanceBodySmall"
+        android:textColor="@color/dialog_on_surface_variant"
+        android:text="@string/dialog_model_problem_section_message" />
+
+    <LinearLayout
+        android:id="@+id/problemModelContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:orientation="vertical" />
+
+    <LinearLayout
+        android:id="@+id/modelManagerActionRow"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/modelManagerImportButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:minHeight="52dp"
+                android:textSize="13sp"
+                android:text="@string/dialog_model_switcher_import" />
+
+            <Button
+                android:id="@+id/modelManagerDownloadButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:minHeight="52dp"
+                android:textSize="13sp"
+                android:text="@string/dialog_model_required_download" />
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/modelManagerCloseButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:minHeight="52dp"
+            android:textSize="13sp"
+            android:text="@string/dialog_close" />
+    </LinearLayout>
+</LinearLayout>

@@ -9,6 +9,7 @@
 	import { conversationsStore, conversations } from '$lib/stores/conversations.svelte';
 	import { chatStore } from '$lib/stores/chat.svelte';
 	import { isMobile } from '$lib/stores/viewport.svelte';
+	import { t } from '$lib/i18n';
 
 	let searchQuery = $state('');
 	let searchInputRef = $state<HTMLInputElement | null>(null);
@@ -37,7 +38,7 @@
 		const conversation = conversations().find((c) => c.id === id);
 		if (!conversation) return;
 
-		const newName = window.prompt('Rename conversation', conversation.name);
+		const newName = window.prompt(t('Rename conversation'), conversation.name);
 		if (newName && newName.trim()) {
 			await conversationsStore.updateConversationName(id, newName.trim());
 		}
@@ -48,7 +49,7 @@
 		if (!conversation) return;
 
 		const confirmed = window.confirm(
-			`Delete "${conversation.name}"? This action cannot be undone.`
+			t('Delete "{{name}}"? This action cannot be undone.', { name: conversation.name })
 		);
 		if (!confirmed) return;
 
@@ -69,7 +70,7 @@
 </script>
 
 <svelte:head>
-	<title>Search · llama.cpp</title>
+	<title>{t('Search')} · llama.cpp</title>
 </svelte:head>
 
 <div class="fixed top-0 z-10 left-0 right-0 p-2">
@@ -78,7 +79,7 @@
 		bind:value={searchQuery}
 		bind:ref={searchInputRef}
 		onClose={handleBack}
-		placeholder="Search conversations..."
+		placeholder={t('Search conversations...')}
 	/>
 </div>
 

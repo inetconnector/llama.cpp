@@ -22,6 +22,7 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { ROUTES } from '$lib/constants/routes';
+	import { t } from '$lib/i18n';
 
 	interface Props {
 		canSend?: boolean;
@@ -31,10 +32,12 @@
 		isLoading?: boolean;
 		isReasoning?: boolean;
 		isRecording?: boolean;
+		hasNativeDictationBridge?: boolean;
 		showAddButton?: boolean;
 		showModelSelector?: boolean;
 		uploadedFiles?: ChatUploadedFile[];
 		onFileUpload?: () => void;
+		onPhotoClick?: () => void;
 		onMicClick?: () => void;
 		onStop?: () => void;
 		onSystemPromptClick?: () => void;
@@ -50,10 +53,12 @@
 		isLoading = false,
 		isReasoning = false,
 		isRecording = false,
+		hasNativeDictationBridge = false,
 		showAddButton = true,
 		showModelSelector = true,
 		uploadedFiles = [],
 		onFileUpload,
+		onPhotoClick,
 		onMicClick,
 		onStop,
 		onSystemPromptClick,
@@ -85,8 +90,15 @@
 	let hasAudioAttachments = $derived(
 		uploadedFiles.some((file) => getFileTypeCategory(file.type) === FileTypeCategory.AUDIO)
 	);
-	let shouldShowRecordButton = $derived(
-		hasAudioModality && !canSubmit && !hasAudioAttachments && currentConfig.autoMicOnEmpty
+	let shouldShowNativeDictationButton = $derived(
+		hasNativeDictationBridge && !hasAudioAttachments
+	);
+	let shouldReplaceSubmitWithRecordButton = $derived(
+		!hasNativeDictationBridge &&
+			!canSubmit &&
+			!hasAudioAttachments &&
+			hasAudioModality &&
+			currentConfig.autoMicOnEmpty
 	);
 
 	let selectorModelRef: ChatFormActionModels | undefined = $state(undefined);
@@ -145,6 +157,7 @@
 				{hasMcpPromptsSupport}
 				{hasMcpResourcesSupport}
 				{onFileUpload}
+				{onPhotoClick}
 				{onSystemPromptClick}
 				{onMcpPromptClick}
 				{onMcpResourcesClick}
@@ -181,12 +194,16 @@
 			onclick={() =>
 				ChatService.stopReasoning(activeMessage?.completionId ?? '', activeMessage?.model)}
 			class="group h-8 w-8 rounded-full p-0"
-			title="Skip reasoning"
+			title={t('Skip reasoning')}
 		>
-			<span class="sr-only">Skip reasoning</span>
+			<span class="sr-only">{t('Skip reasoning')}</span>
 
 			<SkipForward class="h-4 w-4 stroke-muted-foreground group-hover:stroke-foreground" />
 		</Button>
+	{/if}
+
+	{#if shouldShowNativeDictationButton}
+		<ChatFormActionRecord {disabled} {isLoading} {isRecording} {onMicClick} />
 	{/if}
 
 	{#if isLoading && !canSubmit}
@@ -196,14 +213,14 @@
 			onclick={onStop}
 			class="group h-8 w-8 rounded-full p-0 hover:bg-destructive/10!"
 		>
-			<span class="sr-only">Stop</span>
+			<span class="sr-only">{t('Stop')}</span>
 
 			<Square
 				class="h-8 w-8 fill-muted-foreground stroke-muted-foreground group-hover:fill-destructive group-hover:stroke-destructive hover:fill-destructive hover:stroke-destructive"
 			/>
 		</Button>
-	{:else if shouldShowRecordButton}
-		<ChatFormActionRecord {disabled} {hasAudioModality} {isLoading} {isRecording} {onMicClick} />
+	{:else if shouldReplaceSubmitWithRecordButton}
+		<ChatFormActionRecord {disabled} {isLoading} {isRecording} {onMicClick} />
 	{:else}
 		<ChatFormActionSubmit
 			canSend={canSend && (showModelSelector ? hasModelSelected && isSelectedModelInCache : true)}

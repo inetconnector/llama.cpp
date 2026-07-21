@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingLeft="20dp"
+    android:paddingTop="4dp"
+    android:paddingRight="20dp"
+    android:paddingBottom="12dp">
+
+    <TextView
+        android:id="@+id/modelDownloadSubtitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="?android:attr/textColorPrimary"
+        android:textSize="16sp"
+        android:lineSpacingExtra="2dp"
+        android:paddingBottom="8dp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/modelDownloadDeviceInfo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="?android:attr/textColorSecondary"
+        android:textSize="13sp"
+        android:lineSpacingExtra="1.5dp"
+        android:paddingBottom="12dp" />
+
+    <ListView
+        android:id="@+id/modelDownloadList"
+        android:layout_width="match_parent"
+        android:layout_height="320dp"
+        android:divider="@android:color/transparent"
+        android:dividerHeight="10dp"
+        android:scrollbars="vertical" />
+
+    <TextView
+        android:id="@+id/modelDownloadHint"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="?android:attr/textColorSecondary"
+        android:textSize="12sp"
+        android:lineSpacingExtra="1.5dp"
+        android:paddingTop="10dp" />
+
+</LinearLayout>

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import { Settings, ChevronLeft, ChevronRight } from '@lucide/svelte';
 	import { onMount, tick } from 'svelte';
 	import type { SettingsSection, SettingsSectionTitle } from '$lib/constants';
@@ -14,6 +15,7 @@
 	let { sections, isActive, getHref, onSectionChange }: Props = $props();
 
 	const carousel = useScrollCarousel();
+	let swipeStart: { x: number; y: number; pointerId: number } | null = null;
 
 	onMount(async () => {
 		await tick();
@@ -25,8 +27,77 @@
 		}
 	});
 
+	$effect(() => {
+		if (!carousel.scrollContainer) return;
+
+		const activeTab = carousel.scrollContainer.querySelector('[data-active="true"]');
+		if (activeTab instanceof HTMLElement) {
+			void tick().then(() => {
+				carousel.scrollToCenter(activeTab);
+			});
+		}
+	});
+
 	export function updateCarousel() {
 		setTimeout(carousel.updateScrollButtons, 100);
+	}
+
+	function getActiveSectionIndex() {
+		return sections.findIndex((section) => isActive(section));
+	}
+
+	function navigateToAdjacentSection(direction: -1 | 1) {
+		const activeIndex = getActiveSectionIndex();
+		if (activeIndex < 0) return;
+
+		const nextSection = sections[activeIndex + direction];
+		if (!nextSection) return;
+
+		if (getHref) {
+			void goto(getHref(nextSection));
+			return;
+		}
+
+		onSectionChange?.(nextSection.title);
+	}
+
+	function isInteractiveSwipeTarget(target: EventTarget | null) {
+		return (
+			target instanceof Element &&
+			Boolean(
+				target.closest(
+					'input, textarea, select, button, a, [role="button"], [contenteditable="true"]'
+				)
+			)
+		);
+	}
+
+	function handleSwipePointerDown(event: PointerEvent) {
+		if (event.pointerType !== 'touch') return;
+		if (isInteractiveSwipeTarget(event.target)) return;
+
+		swipeStart = {
+			x: event.clientX,
+			y: event.clientY,
+			pointerId: event.pointerId
+		};
+	}
+
+	function handleSwipePointerUp(event: PointerEvent) {
+		if (!swipeStart || event.pointerId !== swipeStart.pointerId) return;
+
+		const dx = event.clientX - swipeStart.x;
+		const dy = event.clientY - swipeStart.y;
+		swipeStart = null;
+
+		if (Math.abs(dx) < 64) return;
+		if (Math.abs(dx) < Math.abs(dy) * 1.2) return;
+
+		navigateToAdjacentSection(dx < 0 ? 1 : -1);
+	}
+
+	function handleSwipePointerCancel() {
+		swipeStart = null;
 	}
 </script>
 
@@ -37,7 +108,12 @@
 		<h1 class="text-xl font-semibold md:text-2xl">Settings</h1>
 	</div>
 
-	<div class="border-b border-border/30 py-2">
+	<div
+		class="border-b border-border/30 py-2"
+		onpointerdown={handleSwipePointerDown}
+		onpointerup={handleSwipePointerUp}
+		onpointercancel={handleSwipePointerCancel}
+	>
 		<div class="relative flex items-center" style="scroll-padding: 1rem;">
 			<button
 				class="absolute left-2 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-muted shadow-md backdrop-blur-sm transition-opacity hover:bg-accent {carousel.canScrollLeft

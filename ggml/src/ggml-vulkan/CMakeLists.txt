@@ -99,6 +99,12 @@ if (Vulkan_FOUND)
 
     target_link_libraries(ggml-vulkan PRIVATE Vulkan::Vulkan)
     target_include_directories(ggml-vulkan PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+    if (DEFINED ENV{VULKAN_SDK})
+        file(TO_CMAKE_PATH "$ENV{VULKAN_SDK}" _ggml_vk_sdk)
+        if (EXISTS "${_ggml_vk_sdk}/Include")
+            target_include_directories(ggml-vulkan PRIVATE "${_ggml_vk_sdk}/Include")
+        endif()
+    endif()
 
     # Workaround to the "can't dereference invalidated vector iterator" bug in clang-cl debug build
     # Possibly relevant: https://stackoverflow.com/questions/74748276/visual-studio-no-displays-the-correct-length-of-stdvector
@@ -162,9 +168,12 @@ if (Vulkan_FOUND)
         message(STATUS "vulkan-shaders-gen toolchain file: ${HOST_CMAKE_TOOLCHAIN_FILE}")
     endif()
 
+    set(_ggml_vk_shaders_gen_build_dir "${CMAKE_BINARY_DIR}/vk-shaders-gen")
+
     ExternalProject_Add(
         vulkan-shaders-gen
         SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/vulkan-shaders
+        BINARY_DIR ${_ggml_vk_shaders_gen_build_dir}
         CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/$<CONFIG>
                    -DCMAKE_INSTALL_BINDIR=.
                    -DCMAKE_BUILD_TYPE=$<CONFIG>

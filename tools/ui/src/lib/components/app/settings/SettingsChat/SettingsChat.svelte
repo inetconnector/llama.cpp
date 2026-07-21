@@ -46,6 +46,7 @@
 	let localConfig: SettingsConfigType = $state({ ...config() });
 
 	let mobileHeader: { updateCarousel: () => void } | undefined;
+	let swipeStart: { x: number; y: number; pointerId: number } | null = null;
 
 	let fetchInitiated = false;
 
@@ -113,6 +114,65 @@
 		goto(settingsReferrer.url);
 	}
 
+	function resolveSectionHref(section: SettingsSection) {
+		return getSectionHref ? getSectionHref(section) : RouterService.settings(section.slug);
+	}
+
+	function navigateToAdjacentSection(direction: -1 | 1) {
+		const currentIndex = SETTINGS_CHAT_SECTIONS.findIndex((section) => section.slug === activeSlug);
+		if (currentIndex < 0) return;
+
+		const nextSection = SETTINGS_CHAT_SECTIONS[currentIndex + direction];
+		if (!nextSection) return;
+
+		void goto(resolveSectionHref(nextSection));
+	}
+
+	function isInteractiveSwipeTarget(target: EventTarget | null) {
+		return (
+			target instanceof Element &&
+			Boolean(
+				target.closest(
+					'input, textarea, select, button, a, [role="button"], [contenteditable="true"]'
+				)
+			)
+		);
+	}
+
+	function handleSwipePointerDown(event: PointerEvent) {
+		if (event.pointerType !== 'touch') return;
+		if (isInteractiveSwipeTarget(event.target)) return;
+		if (typeof window !== 'undefined') {
+			const edgeInset = 20;
+			if (event.clientX <= edgeInset || event.clientX >= window.innerWidth - edgeInset) {
+				return;
+			}
+		}
+
+		swipeStart = {
+			x: event.clientX,
+			y: event.clientY,
+			pointerId: event.pointerId
+		};
+	}
+
+	function handleSwipePointerUp(event: PointerEvent) {
+		if (!swipeStart || event.pointerId !== swipeStart.pointerId) return;
+
+		const dx = event.clientX - swipeStart.x;
+		const dy = event.clientY - swipeStart.y;
+		swipeStart = null;
+
+		if (Math.abs(dx) < 64) return;
+		if (Math.abs(dx) < Math.abs(dy) * 1.2) return;
+
+		navigateToAdjacentSection(dx < 0 ? 1 : -1);
+	}
+
+	function handleSwipePointerCancel() {
+		swipeStart = null;
+	}
+
 	export function reset() {
 		localConfig = { ...config() };
 	}
@@ -143,7 +203,13 @@
 			bind:this={mobileHeader}
 		/>
 
-		<div class="mx-auto max-w-3xl flex-1">
+		<div
+			class="mx-auto max-w-3xl flex-1"
+			style="touch-action: pan-y;"
+			onpointerdown={handleSwipePointerDown}
+			onpointerup={handleSwipePointerUp}
+			onpointercancel={handleSwipePointerCancel}
+		>
 			<div class="space-y-6 p-4 md:p-6 md:pt-28">
 				<div class="grid">
 					<div class="mb-6 flex items-center gap-2 border-b border-border/30 pb-6 md:flex">

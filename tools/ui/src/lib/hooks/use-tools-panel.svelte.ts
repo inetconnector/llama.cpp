@@ -4,6 +4,7 @@ import { ToolSource } from '$lib/enums';
 import { conversationsStore } from '$lib/stores/conversations.svelte';
 import { mcpStore } from '$lib/stores/mcp.svelte';
 import { toolsStore } from '$lib/stores/tools.svelte';
+import { t } from '$lib/i18n';
 import type { ToolGroup } from '$lib/types';
 
 export interface UseToolsPanelReturn {
@@ -47,11 +48,17 @@ export function useToolsPanel(): UseToolsPanelReturn {
 		if (toolsStore.toolGroups.length > 0) return null;
 		// Tools endpoint is unreachable (404) — server started without --tools
 		if (toolsStore.isToolsEndpointUnreachable) {
-			return `To enable Built-In Tools you need to run llama-server with ${CLI_FLAGS.TOOLS} all or ${CLI_FLAGS.TOOLS} <name> flag. To see MCP Tools you need to add / enable MCP Server(s).`;
+			return t(
+				'To enable Built-In Tools you need to run llama-server with {{tools}} all or {{tools}} <name> flag. To see MCP Tools you need to add / enable MCP Server(s).',
+				{ tools: CLI_FLAGS.TOOLS }
+			);
 		}
 		// Other errors — return null so UI shows "Failed to load tools"
 		if (toolsStore.error) return null;
-		return `To enable Built-In Tools you need to run llama-server with ${CLI_FLAGS.TOOLS} all or ${CLI_FLAGS.TOOLS} <name> flag. To see MCP Tools you need to add / enable MCP Server(s).`;
+		return t(
+			'To enable Built-In Tools you need to run llama-server with {{tools}} all or {{tools}} <name> flag. To see MCP Tools you need to add / enable MCP Server(s).',
+			{ tools: CLI_FLAGS.TOOLS }
+		);
 	});
 
 	function isGroupChecked(group: ToolGroup): boolean {

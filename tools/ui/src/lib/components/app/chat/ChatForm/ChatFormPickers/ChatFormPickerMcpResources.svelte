@@ -14,6 +14,7 @@
 		ChatFormPickerItemHeader,
 		ChatFormPickerListItemSkeleton
 	} from '$lib/components/app/chat';
+	import { t } from '$lib/i18n';
 
 	interface Props {
 		class?: string;
@@ -166,7 +167,7 @@
 <ChatFormPickerPopover
 	bind:isOpen
 	class={className}
-	srLabel="Open resource picker"
+	srLabel={t('Open resource picker')}
 	{onClose}
 	onKeydown={handleKeydown}
 >
@@ -176,8 +177,8 @@
 		{selectedIndex}
 		bind:searchQuery={internalSearchQuery}
 		{showSearchInput}
-		searchPlaceholder="Search resources..."
-		emptyMessage="No MCP resources available"
+		searchPlaceholder={t('Search resources...')}
+		emptyMessage={t('No MCP resources available')}
 		itemKey={(resource) => resource.serverName + ':' + resource.uri}
 	>
 		{#snippet item(resource, index, isSelected)}
@@ -200,7 +201,7 @@
 							<span
 								class="inline-flex items-center rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary"
 							>
-								attached
+								{t('attached')}
 							</span>
 						{/if}
 					{/snippet}
@@ -229,7 +230,7 @@
 				>
 					<FolderOpen class="h-3 w-3" />
 
-					Browse all
+					{t('Browse all')}
 				</Button>
 			{/if}
 		{/snippet}

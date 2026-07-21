@@ -3,6 +3,7 @@
 	import { Checkbox } from '$lib/components/ui/checkbox';
 	import Label from '$lib/components/ui/label/label.svelte';
 	import { Shield, ShieldOff } from '@lucide/svelte';
+	import { t } from '$lib/i18n';
 
 	let {
 		open = $bindable(),
@@ -32,20 +33,21 @@
 				{:else}
 					<Shield class="h-5 w-5 text-destructive" />
 				{/if}
-				Export Settings
+				{t('Export Settings')}
 			</AlertDialog.Title>
 
 			<AlertDialog.Description>
 				{#if includeSensitiveData}
 					<p class="text-amber-500">
-						Warning: This export will include sensitive data such as API keys and MCP server custom
-						headers (e.g., authorization tokens). Do not share this file with anyone you don't
-						trust.
+						{t(
+							'Warning: This export will include sensitive data such as API keys and MCP server custom headers (e.g., authorization tokens). Do not share this file with anyone you do not trust.'
+						)}
 					</p>
 				{:else}
 					<p>
-						Sensitive data (API keys, MCP server custom headers) will not be included in the export
-						to protect your credentials.
+						{t(
+							'Sensitive data (API keys, MCP server custom headers) will not be included in the export to protect your credentials.'
+						)}
 					</p>
 				{/if}
 			</AlertDialog.Description>
@@ -59,23 +61,23 @@
 				class="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
 			>
 				{#if includeSensitiveData}
-					<span class="text-destructive">Include sensitive data (not recommended)</span>
+					<span class="text-destructive">{t('Include sensitive data (not recommended)')}</span>
 				{:else}
-					<span>Include sensitive data</span>
+					<span>{t('Include sensitive data')}</span>
 				{/if}
 			</Label>
 		</div>
 
 		<AlertDialog.Footer>
-			<AlertDialog.Cancel onclick={onCancel}>Cancel</AlertDialog.Cancel>
+			<AlertDialog.Cancel onclick={onCancel}>{t('Cancel')}</AlertDialog.Cancel>
 			<AlertDialog.Action
 				onclick={onConfirm}
 				class="bg-destructive text-white hover:bg-destructive/80"
 			>
 				{#if includeSensitiveData}
-					Export Anyway
+					{t('Export Anyway')}
 				{:else}
-					Export Without Sensitive Data
+					{t('Export Without Sensitive Data')}
 				{/if}
 			</AlertDialog.Action>
 		</AlertDialog.Footer>

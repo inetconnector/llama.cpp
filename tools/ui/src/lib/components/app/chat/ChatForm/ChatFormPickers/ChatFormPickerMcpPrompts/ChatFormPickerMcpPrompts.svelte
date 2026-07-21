@@ -14,6 +14,7 @@
 		ChatFormPromptPickerArgumentForm
 	} from '$lib/components/app/chat';
 	import Badge from '$lib/components/ui/badge/badge.svelte';
+	import { t } from '$lib/i18n';
 
 	interface Props {
 		class?: string;
@@ -142,7 +143,7 @@
 			onPromptLoadComplete?.(placeholderId, result);
 		} catch (error) {
 			const errorMessage =
-				error instanceof Error ? error.message : 'Unknown error executing prompt';
+				error instanceof Error ? error.message : t('Unknown error executing prompt');
 			onPromptLoadError?.(placeholderId, errorMessage);
 		}
 	}
@@ -348,7 +349,7 @@
 <ChatFormPickerPopover
 	bind:isOpen
 	class={className}
-	srLabel="Open prompt picker"
+	srLabel={t('Open prompt picker')}
 	{onClose}
 	onKeydown={handleKeydown}
 >
@@ -373,9 +374,9 @@
 				{/snippet}
 			</ChatFormPickerItemHeader>
 
-			<ChatFormPromptPickerArgumentForm
-				prompt={selectedPrompt}
-				{promptArgs}
+				<ChatFormPromptPickerArgumentForm
+					prompt={selectedPrompt}
+					{promptArgs}
 				{suggestions}
 				{loadingSuggestions}
 				{activeAutocomplete}
@@ -397,8 +398,8 @@
 			{selectedIndex}
 			bind:searchQuery={internalSearchQuery}
 			{showSearchInput}
-			searchPlaceholder="Search prompts..."
-			emptyMessage="No MCP prompts available"
+			searchPlaceholder={t('Search prompts...')}
+			emptyMessage={t('No MCP prompts available')}
 			itemKey={(prompt) => prompt.serverName + ':' + prompt.name}
 		>
 			{#snippet item(prompt, index, isSelected)}
@@ -417,14 +418,12 @@
 						description={prompt.description}
 					>
 						{#snippet titleExtra()}
-							{#if prompt.arguments?.length}
-								<Badge variant="secondary">
-									{prompt.arguments.length} arg{prompt.arguments.length > 1 ? 's' : ''}
-								</Badge>
-							{/if}
-						{/snippet}
-					</ChatFormPickerItemHeader>
-				</ChatFormPickerListItem>
+						{#if prompt.arguments?.length}
+							<Badge variant="secondary">{t('{{count}} args', { count: prompt.arguments.length })}</Badge>
+						{/if}
+					{/snippet}
+				</ChatFormPickerItemHeader>
+			</ChatFormPickerListItem>
 			{/snippet}
 
 			{#snippet skeleton()}

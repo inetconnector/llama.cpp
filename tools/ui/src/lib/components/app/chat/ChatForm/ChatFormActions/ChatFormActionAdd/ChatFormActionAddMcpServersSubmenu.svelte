@@ -9,6 +9,7 @@
 	import type { MCPServerSettingsEntry } from '$lib/types';
 	import { goto } from '$app/navigation';
 	import { ROUTES } from '$lib/constants/routes';
+	import { t } from '$lib/i18n';
 
 	interface Props {
 		onMcpSettingsClick?: () => void;
@@ -62,15 +63,15 @@
 		<DropdownMenu.SubTrigger class="flex cursor-pointer items-center gap-2">
 			<McpLogo class="h-4 w-4" />
 
-			<span>MCP Servers</span>
+			<span>{t('MCP Servers')}</span>
 		</DropdownMenu.SubTrigger>
 
 		<DropdownMenu.SubContent class="w-72 pt-0">
 			{#if hasMcpServers}
 				<DropdownMenuSearchable
-					placeholder="Search servers..."
+					placeholder={t('Search servers...')}
 					bind:searchValue={mcpSearchQuery}
-					emptyMessage="No servers found"
+					emptyMessage={t('No servers found')}
 					isEmpty={filteredMcpServers.length === 0}
 				>
 					<div class="max-h-64 overflow-y-auto">
@@ -103,7 +104,7 @@
 										<span
 											class="shrink-0 rounded bg-destructive/15 px-1.5 py-0.5 text-xs text-destructive"
 										>
-											Error
+											{t('Error')}
 										</span>
 									{/if}
 								</div>
@@ -125,13 +126,13 @@
 						>
 							<Settings class="h-4 w-4" />
 
-							<span>Manage MCP Servers</span>
+							<span>{t('Manage MCP Servers')}</span>
 						</DropdownMenu.Item>
 					{/snippet}
 				</DropdownMenuSearchable>
 			{:else}
 				<div class="px-2 py-3 text-center text-sm text-muted-foreground">
-					No MCP servers configured
+					{t('No MCP servers configured')}
 				</div>
 
 				<DropdownMenu.Separator />
@@ -142,7 +143,7 @@
 				>
 					<Plus class="h-4 w-4" />
 
-					<span>Add MCP Servers</span>
+					<span>{t('Add MCP Servers')}</span>
 				</DropdownMenu.Item>
 			{/if}
 		</DropdownMenu.SubContent>

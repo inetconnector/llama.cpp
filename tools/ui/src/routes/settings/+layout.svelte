@@ -5,6 +5,7 @@
 	import { page } from '$app/state';
 	import { ActionIcon } from '$lib/components/app';
 	import { SETTINGS_FALLBACK_EXIT_ROUTE } from '$lib/constants';
+	import { t } from '$lib/i18n';
 
 	let { children } = $props();
 
@@ -28,7 +29,7 @@
 </script>
 
 <div class="fixed top-4.5 right-4 z-50 md:hidden">
-	<ActionIcon icon={X} tooltip="Close" onclick={handleClose} />
+	<ActionIcon icon={X} tooltip={t('Close')} onclick={handleClose} />
 </div>
 
 <div class="min-h-full">

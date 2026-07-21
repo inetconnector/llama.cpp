@@ -4,6 +4,7 @@
 	import SearchInput from '$lib/components/app/forms/SearchInput.svelte';
 	import { ScrollArea } from '$lib/components/ui/scroll-area';
 	import { SvelteSet } from 'svelte/reactivity';
+	import { t } from '$lib/i18n';
 
 	interface Props {
 		conversations: DatabaseConversation[];
@@ -25,7 +26,7 @@
 
 	let filteredConversations = $derived(
 		conversations.filter((conv) => {
-			const name = conv.name || 'Untitled conversation';
+			const name = conv.name || t('Untitled conversation');
 			return name.toLowerCase().includes(searchQuery.toLowerCase());
 		})
 	);
@@ -110,15 +111,15 @@
 </script>
 
 <div class="space-y-4">
-	<SearchInput bind:value={searchQuery} placeholder="Search conversations..." />
+	<SearchInput bind:value={searchQuery} placeholder={t('Search conversations...')} />
 
 	<div class="flex items-center justify-between text-sm text-muted-foreground">
-		<span>
-			{selectedIds.size} of {conversations.length} selected
-			{#if searchQuery}
-				({filteredConversations.length} shown)
-			{/if}
-		</span>
+			<span>
+				{selectedIds.size}/{conversations.length}
+				{#if searchQuery}
+					({filteredConversations.length})
+				{/if}
+			</span>
 	</div>
 
 	<div class="overflow-hidden rounded-md border">
@@ -134,21 +135,21 @@
 							/>
 						</th>
 
-						<th class="p-3 text-left text-sm font-medium">Conversation Name</th>
+						<th class="p-3 text-left text-sm font-medium">{t('Conversation Name')}</th>
 
-						<th class="w-32 p-3 text-left text-sm font-medium">Messages</th>
+						<th class="w-32 p-3 text-left text-sm font-medium">{t('Messages')}</th>
 					</tr>
 				</thead>
 				<tbody>
 					{#if filteredConversations.length === 0}
 						<tr>
 							<td colspan="3" class="p-8 text-center text-sm text-muted-foreground">
-								{#if searchQuery}
-									No conversations found matching "{searchQuery}"
-								{:else}
-									No conversations available
-								{/if}
-							</td>
+									{#if searchQuery}
+										{t('No conversations found matching "{{query}}"', { query: searchQuery })}
+									{:else}
+										{t('No conversations available')}
+									{/if}
+								</td>
 						</tr>
 					{:else}
 						{#each filteredConversations as conv (conv.id)}
@@ -168,8 +169,8 @@
 								</td>
 
 								<td class="p-3 text-sm">
-									<div class="max-w-[17rem] truncate" title={conv.name || 'Untitled conversation'}>
-										{conv.name || 'Untitled conversation'}
+									<div class="max-w-[17rem] truncate" title={conv.name || t('Untitled conversation')}>
+										{conv.name || t('Untitled conversation')}
 									</div>
 								</td>
 
@@ -185,10 +186,10 @@
 	</div>
 
 	<div class="flex justify-end gap-2">
-		<Button variant="outline" onclick={handleCancel}>Cancel</Button>
+		<Button variant="outline" onclick={handleCancel}>{t('Cancel')}</Button>
 
 		<Button onclick={handleConfirm} disabled={selectedIds.size === 0}>
-			{mode === 'export' ? 'Export' : 'Import'} ({selectedIds.size})
+			{mode === 'export' ? t('Export') : t('Import')} ({selectedIds.size})
 		</Button>
 	</div>
 </div>

@@ -2,6 +2,7 @@
 	import * as AlertDialog from '$lib/components/ui/alert-dialog';
 	import { AlertTriangle, TimerOff } from '@lucide/svelte';
 	import { ErrorDialogType } from '$lib/enums';
+	import { t } from '$lib/i18n';
 
 	interface Props {
 		open: boolean;
@@ -14,11 +15,11 @@
 	let { open = $bindable(), type, message, contextInfo, onOpenChange }: Props = $props();
 
 	const isTimeout = $derived(type === ErrorDialogType.TIMEOUT);
-	const title = $derived(isTimeout ? 'TCP Timeout' : 'Server Error');
+	const title = $derived(isTimeout ? t('TCP Timeout') : t('Server Error'));
 	const description = $derived(
 		isTimeout
-			? 'The request did not receive a response from the server before timing out.'
-			: 'The server responded with an error message. Review the details below.'
+			? t('The request did not receive a response from the server before timing out.')
+			: t('The server responded with an error message. Review the details below.')
 	);
 	const iconClass = $derived(isTimeout ? 'text-destructive' : 'text-amber-500');
 	const badgeClass = $derived(
@@ -57,14 +58,14 @@
 			{#if contextInfo}
 				<div class="mt-2 space-y-1 text-xs opacity-80">
 					<p>
-						<span class="font-medium">Prompt tokens:</span>
+						<span class="font-medium">{t('Prompt tokens')}:</span>
 
 						{contextInfo.n_prompt_tokens.toLocaleString()}
 					</p>
 
 					{#if contextInfo.n_ctx}
 						<p>
-							<span class="font-medium">Context size:</span>
+							<span class="font-medium">{t('Context size')}:</span>
 
 							{contextInfo.n_ctx.toLocaleString()}
 						</p>
@@ -74,7 +75,7 @@
 		</div>
 
 		<AlertDialog.Footer>
-			<AlertDialog.Action onclick={() => handleOpenChange(false)}>Close</AlertDialog.Action>
+			<AlertDialog.Action onclick={() => handleOpenChange(false)}>{t('Close')}</AlertDialog.Action>
 		</AlertDialog.Footer>
 	</AlertDialog.Content>
 </AlertDialog.Root>

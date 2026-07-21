@@ -40,6 +40,7 @@
 		isAudioRecordingSupported
 	} from '$lib/utils/browser-only';
 	import { onMount } from 'svelte';
+	import { t } from '$lib/i18n';
 
 	interface Props {
 		// Data
@@ -60,7 +61,7 @@
 		onAttachmentRemove?: (index: number) => void;
 		onFilesAdd?: (files: File[]) => void;
 		onStop?: () => void;
-		onSubmit?: () => void;
+		onSubmit?: (messageOverride?: string) => void | Promise<void>;
 		onSystemPromptClick?: (draft: { message: string; files: ChatUploadedFile[] }) => void;
 		onUploadedFileRemove?: (fileId: string) => void;
 		onUploadedFilesChange?: (files: ChatUploadedFile[]) => void;
@@ -72,7 +73,7 @@
 		class: className = '',
 		disabled = false,
 		isLoading = false,
-		placeholder = 'Type a message...',
+		placeholder = t('Type a message...'),
 		showMcpPromptButton = false,
 		showAddButton = true,
 		showModelSelector = true,
@@ -92,6 +93,7 @@
 	let audioRecorder: AudioRecorder | undefined;
 	let chatFormActionsRef: ChatFormActions | undefined = $state(undefined);
 	let fileInputRef: ChatFormFileInputInvisible | undefined = $state(undefined);
+	let photoInputRef: ChatFormFileInputInvisible | undefined = $state(undefined);
 	let pickersRef: { handleKeydown: (event: KeyboardEvent) => boolean } | undefined =
 		$state(undefined);
 	let textareaRef: ChatFormTextarea | undefined = $state(undefined);
@@ -99,6 +101,7 @@
 	// Audio Recording State
 	let isRecording = $state(false);
 	let recordingSupported = $state(false);
+	let nativeDictationSupported = $state(false);
 
 	// Picker State
 	let isPromptPickerOpen = $state(false);
@@ -111,6 +114,17 @@
 	let preSelectedResourceUri = $state<string | undefined>(undefined);
 
 	let currentConfig = $derived(config());
+
+	function refreshNativeDictationSupport() {
+		nativeDictationSupported = Boolean(
+			typeof window !== 'undefined' &&
+				((window as Window & { __DMC_NATIVE_DICTATION__?: boolean }).__DMC_NATIVE_DICTATION__ ||
+					(window as Window & {
+						AndroidSpeechBridge?: { startDictation?: () => void };
+					}).AndroidSpeechBridge?.startDictation ||
+					/Android/i.test(navigator.userAgent))
+		);
+	}
 
 	let pasteLongTextToFileLength = $derived.by(() => {
 		const n = Number(currentConfig.pasteLongTextToFileLen);
@@ -152,6 +166,38 @@
 	onMount(() => {
 		recordingSupported = isAudioRecordingSupported();
 		audioRecorder = new AudioRecorder();
+		refreshNativeDictationSupport();
+
+		const handleNativeDictationResult = (event: Event) => {
+			const spoken = (event as CustomEvent<string>).detail?.trim();
+			if (!spoken) return;
+
+			const nextValue = value
+				? `${value}${/\s$/.test(value) ? '' : ' '}${spoken}`
+				: spoken;
+			value = nextValue;
+			onValueChange?.(nextValue);
+
+			if (!disabled && !isLoading && !hasLoadingAttachments) {
+				void onSubmit?.(nextValue);
+			}
+			textareaRef?.focus();
+		};
+
+		const handleNativeDictationReady = () => {
+			refreshNativeDictationSupport();
+		};
+
+		window.addEventListener('native-dictation-result', handleNativeDictationResult as EventListener);
+		window.addEventListener('dmc-native-dictation-ready', handleNativeDictationReady);
+
+		return () => {
+			window.removeEventListener(
+				'native-dictation-result',
+				handleNativeDictationResult as EventListener
+			);
+			window.removeEventListener('dmc-native-dictation-ready', handleNativeDictationReady);
+		};
 	});
 
 	export function focus() {
@@ -175,11 +221,19 @@
 	}
 
 	function handleFileSelect(files: File[]) {
+		if (files.length === 0) {
+			return;
+		}
+
 		onFilesAdd?.(files);
 	}
 
 	function handleFileUpload() {
 		fileInputRef?.click();
+	}
+
+	function handlePhotoUpload() {
+		photoInputRef?.click();
 	}
 
 	function handleFileRemove(fileId: string) {
@@ -439,6 +493,21 @@
 	}
 
 	async function handleMicClick() {
+		const androidBridge = typeof window !== 'undefined'
+			? (window as Window & {
+					AndroidSpeechBridge?: { startDictation?: () => void };
+				}).AndroidSpeechBridge
+			: undefined;
+
+		if (androidBridge?.startDictation) {
+			try {
+				androidBridge.startDictation();
+				return;
+			} catch (error) {
+				console.error('Failed to start native dictation:', error);
+			}
+		}
+
 		if (!audioRecorder || !recordingSupported) {
 			console.warn('Audio recording not supported');
 			return;
@@ -467,6 +536,13 @@
 </script>
 
 <ChatFormFileInputInvisible bind:this={fileInputRef} onFileSelect={handleFileSelect} />
+<ChatFormFileInputInvisible
+	bind:this={photoInputRef}
+	accept="image/*"
+	capture="environment"
+	multiple={false}
+	onFileSelect={handleFileSelect}
+/>
 
 <form
 	class="relative {className}"
@@ -540,14 +616,17 @@
 				class="px-3"
 				bind:this={chatFormActionsRef}
 				canSend={canSubmit}
+				{canSubmit}
 				{disabled}
 				{isLoading}
 				isReasoning={chatStore.isReasoning}
 				{isRecording}
+				hasNativeDictationBridge={nativeDictationSupported}
 				{showAddButton}
 				{showModelSelector}
 				{uploadedFiles}
 				onFileUpload={handleFileUpload}
+				onPhotoClick={handlePhotoUpload}
 				onMicClick={handleMicClick}
 				{onStop}
 				onSystemPromptClick={() => onSystemPromptClick?.({ message: value, files: uploadedFiles })}

@@ -930,6 +930,17 @@ export class ChatService {
 				if (!conversationId) break;
 
 				if (!madeProgress) {
+					// If we already parsed visible output before the reconnect, a zero-byte resume
+					// means the server session ended before it had more data to replay. Treat that as
+					// a graceful completion instead of surfacing a false hard error.
+					if (
+						aggregatedContent.length > 0 ||
+						fullReasoningContent.length > 0 ||
+						aggregatedToolCalls.length > 0
+					) {
+						streamFinished = true;
+						break;
+					}
 					onConnectionState?.(StreamConnectionState.LOST);
 					onError?.(new Error('Stream resume produced no new bytes, giving up'));
 					break;

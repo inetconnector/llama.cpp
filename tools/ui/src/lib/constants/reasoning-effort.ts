@@ -1,4 +1,5 @@
 import { ReasoningEffort } from '$lib/enums';
+import { t } from '$lib/i18n';
 import type { ReasoningEffortLevel } from '$lib/types';
 
 /**
@@ -6,17 +7,17 @@ import type { ReasoningEffortLevel } from '$lib/types';
  * Keys match the ReasoningEffort enum values for type-safe lookups.
  */
 export const REASONING_EFFORT_LABELS: Record<string, string> = {
-	[ReasoningEffort.OFF]: 'Off',
-	[ReasoningEffort.LOW]: 'Low',
-	[ReasoningEffort.MEDIUM]: 'Medium',
-	[ReasoningEffort.HIGH]: 'High',
-	[ReasoningEffort.MAX]: 'Max'
+	[ReasoningEffort.OFF]: t('off'),
+	[ReasoningEffort.LOW]: t('Low'),
+	[ReasoningEffort.MEDIUM]: t('Medium'),
+	[ReasoningEffort.HIGH]: t('High'),
+	[ReasoningEffort.MAX]: t('Max')
 };
 
 export const REASONING_EFFORT_LEVELS: ReasoningEffortLevel[] = [
-	{ value: ReasoningEffort.OFF, label: 'Off', isOff: true },
-	{ value: ReasoningEffort.LOW, label: 'Low' },
-	{ value: ReasoningEffort.MEDIUM, label: 'Medium' },
-	{ value: ReasoningEffort.HIGH, label: 'High' },
-	{ value: ReasoningEffort.MAX, label: 'Max', hasInfo: true }
+	{ value: ReasoningEffort.OFF, label: t('off'), isOff: true },
+	{ value: ReasoningEffort.LOW, label: t('Low') },
+	{ value: ReasoningEffort.MEDIUM, label: t('Medium') },
+	{ value: ReasoningEffort.HIGH, label: t('High') },
+	{ value: ReasoningEffort.MAX, label: t('Max'), hasInfo: true }
 ];

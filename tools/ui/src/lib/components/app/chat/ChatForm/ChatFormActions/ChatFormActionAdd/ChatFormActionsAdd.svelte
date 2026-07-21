@@ -12,6 +12,7 @@
 		hasMcpResourcesSupport?: boolean;
 		hasVisionModality?: boolean;
 		onFileUpload?: () => void;
+		onPhotoClick?: () => void;
 		onMcpPromptClick?: () => void;
 		onMcpResourcesClick?: () => void;
 		onMcpSettingsClick?: () => void;
@@ -26,6 +27,7 @@
 		hasMcpResourcesSupport = false,
 		hasVisionModality = false,
 		onFileUpload,
+		onPhotoClick,
 		onMcpPromptClick,
 		onMcpResourcesClick,
 		onMcpSettingsClick,
@@ -42,6 +44,7 @@
 		{hasMcpPromptsSupport}
 		{hasMcpResourcesSupport}
 		{onFileUpload}
+		{onPhotoClick}
 		{onSystemPromptClick}
 		{onMcpPromptClick}
 		{onMcpResourcesClick}
@@ -59,6 +62,7 @@
 		{hasMcpPromptsSupport}
 		{hasMcpResourcesSupport}
 		{onFileUpload}
+		{onPhotoClick}
 		{onMcpPromptClick}
 		{onMcpResourcesClick}
 		{onMcpSettingsClick}

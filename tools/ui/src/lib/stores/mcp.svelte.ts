@@ -27,6 +27,7 @@ import { SETTINGS_KEYS } from '$lib/constants';
 import { MCPService } from '$lib/services/mcp.service';
 import { config, settingsStore } from '$lib/stores/settings.svelte';
 import { mcpResourceStore } from '$lib/stores/mcp-resources.svelte';
+import { t } from '$lib/i18n';
 import { serverStore } from '$lib/stores/server.svelte';
 import { mode } from 'mode-watcher';
 import {
@@ -1837,7 +1838,7 @@ class MCPStore {
 			if (content) {
 				mcpResourceStore.updateAttachmentContent(attachment.id, content);
 			} else {
-				mcpResourceStore.updateAttachmentError(attachment.id, 'Failed to read resource');
+				mcpResourceStore.updateAttachmentError(attachment.id, t('Failed to read resource'));
 			}
 		} catch (error) {
 			const message = error instanceof Error ? error.message : String(error);

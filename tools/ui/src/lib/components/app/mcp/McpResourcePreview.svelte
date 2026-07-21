@@ -11,6 +11,7 @@
 	} from '$lib/utils';
 	import { MimeTypeApplication, MimeTypeText } from '$lib/enums';
 	import { ActionIconCopyToClipboard } from '$lib/components/app';
+	import { t } from '$lib/i18n';
 	import type { MCPResourceInfo, MCPResourceContent } from '$lib/types';
 
 	interface Props {
@@ -50,10 +51,10 @@
 			if (result) {
 				content = result;
 			} else {
-				error = 'Failed to load resource content';
+				error = t('Failed to load resource content');
 			}
 		} catch (e) {
-			error = e instanceof Error ? e.message : 'Unknown error';
+			error = e instanceof Error ? e.message : t('Unknown error');
 		} finally {
 			isLoading = false;
 		}
@@ -75,7 +76,7 @@
 		<div class="flex flex-col items-center justify-center gap-2 py-8 text-muted-foreground">
 			<FileText class="h-8 w-8 opacity-50" />
 
-			<span class="text-sm">Select a resource to preview</span>
+			<span class="text-sm">{t('Select a resource to preview')}</span>
 		</div>
 	{:else}
 		<div class="flex items-start justify-between gap-2">
@@ -93,7 +94,7 @@
 				<ActionIconCopyToClipboard
 					text={getResourceTextContent(content)}
 					canCopy={!isLoading && !!getResourceTextContent(content)}
-					ariaLabel="Copy content"
+					ariaLabel={t('Copy content')}
 				/>
 
 				<Button
@@ -102,7 +103,7 @@
 					class="h-7 w-7 p-0"
 					onclick={handleDownload}
 					disabled={isLoading || !getResourceTextContent(content)}
-					title="Download content"
+					title={t('Download content')}
 				>
 					<Download class="h-3.5 w-3.5" />
 				</Button>
@@ -135,20 +136,26 @@
 								blob.mimeType ?? MimeTypeApplication.OCTET_STREAM,
 								blob.blob
 							)}
-							alt="Resource content"
+							alt={t('Resource content')}
 							class="max-w-full rounded"
 						/>
 					{:else}
 						<div class="flex items-center gap-2 rounded bg-muted p-2 text-sm text-muted-foreground">
 							<FileText class="h-4 w-4" />
 
-							<span>Binary content ({blob.mimeType || 'unknown type'})</span>
+							<span>
+								{t('Binary content ({{type}})', {
+									type: blob.mimeType || t('unknown type')
+								})}
+							</span>
 						</div>
 					{/if}
 				{/each}
 
 				{#if !textContent && blobContent.length === 0}
-					<div class="py-4 text-center text-sm text-muted-foreground">No content available</div>
+					<div class="py-4 text-center text-sm text-muted-foreground">
+						{t('No content available')}
+					</div>
 				{/if}
 			{/if}
 		</div>
@@ -161,12 +168,12 @@
 
 				{#if resource.annotations?.priority !== undefined}
 					<span class="rounded bg-muted px-1.5 py-0.5">
-						Priority: {resource.annotations.priority}
+						{t('Priority:')} {resource.annotations.priority}
 					</span>
 				{/if}
 
 				<span class="rounded bg-muted px-1.5 py-0.5">
-					Server: {resource.serverName}
+					{t('Server:')} {resource.serverName}
 				</span>
 			</div>
 		{/if}

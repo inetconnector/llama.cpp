@@ -16,6 +16,7 @@
 	import { PencilRuler, ChevronDown, ChevronRight } from '@lucide/svelte';
 	import { HealthCheckStatus } from '$lib/enums';
 	import { AttachmentAction } from '$lib/enums/attachment.enums';
+	import { t } from '$lib/i18n';
 
 	interface Props {
 		class?: string;
@@ -26,6 +27,7 @@
 		hasMcpPromptsSupport?: boolean;
 		hasMcpResourcesSupport?: boolean;
 		onFileUpload?: () => void;
+		onPhotoClick?: () => void;
 		onSystemPromptClick?: () => void;
 		onMcpPromptClick?: () => void;
 		onMcpResourcesClick?: () => void;
@@ -41,6 +43,7 @@
 		hasMcpPromptsSupport = false,
 		hasMcpResourcesSupport = false,
 		onFileUpload,
+		onPhotoClick,
 		onSystemPromptClick,
 		onMcpPromptClick,
 		onMcpResourcesClick,
@@ -60,7 +63,13 @@
 			hasMcpPromptsSupport,
 			hasMcpResourcesSupport
 		}),
-		() => ({ onFileUpload, onSystemPromptClick, onMcpPromptClick, onMcpResourcesClick }),
+		() => ({
+			onFileUpload,
+			onPhotoClick,
+			onSystemPromptClick,
+			onMcpPromptClick,
+			onMcpResourcesClick
+		}),
 		() => {
 			sheetOpen = false;
 		}
@@ -83,10 +92,10 @@
 
 		<Sheet.Content side="bottom" class="max-h-[85vh] gap-0 overflow-y-auto">
 			<Sheet.Header>
-				<Sheet.Title>Add to chat</Sheet.Title>
+				<Sheet.Title>{t('Add to chat')}</Sheet.Title>
 
 				<Sheet.Description class="sr-only">
-					Add files, system prompt or configure MCP servers
+					{t('Add files, system prompt or configure MCP servers')}
 				</Sheet.Description>
 			</Sheet.Header>
 
@@ -101,7 +110,7 @@
 
 						<File class="h-4 w-4 shrink-0" />
 
-						<span class="flex-1">Add files</span>
+						<span class="flex-1">{t('Add files')}</span>
 					</Collapsible.Trigger>
 
 					<Collapsible.Content>
@@ -148,11 +157,9 @@
 
 						<McpLogo class="inline h-4 w-4 shrink-0" />
 
-						<span class="flex-1">MCP Servers</span>
+						<span class="flex-1">{t('MCP Servers')}</span>
 
-						<span class="text-xs text-muted-foreground">
-							{visibleMcpServers.length} server{visibleMcpServers.length !== 1 ? 's' : ''}
-						</span>
+						<span class="text-xs text-muted-foreground">{visibleMcpServers.length}</span>
 					</Collapsible.Trigger>
 
 					<Collapsible.Content>
@@ -189,7 +196,7 @@
 										<span
 											class="shrink-0 rounded bg-destructive/15 px-1.5 py-0.5 text-xs text-destructive"
 										>
-											Error
+											{t('Error')}
 										</span>
 									{:else}
 										<Switch
@@ -202,7 +209,7 @@
 
 							{#if visibleMcpServers.length === 0}
 								<div class="px-3 py-2 text-center text-sm text-muted-foreground">
-									No MCP servers configured
+									{t('No MCP servers configured')}
 								</div>
 							{/if}
 						</div>
@@ -220,11 +227,9 @@
 
 							<PencilRuler class="inline h-4 w-4 shrink-0" />
 
-							<span class="flex-1">Tools</span>
+							<span class="flex-1">{t('Tools')}</span>
 
-							<span class="text-xs text-muted-foreground">
-								{toolsPanel.totalToolCount} tool{toolsPanel.totalToolCount !== 1 ? 's' : ''}
-							</span>
+							<span class="text-xs text-muted-foreground">{toolsPanel.totalToolCount}</span>
 						</Collapsible.Trigger>
 
 						<Collapsible.Content>
@@ -276,7 +281,7 @@
 				>
 					<MessageSquare class="h-4 w-4 shrink-0" />
 
-					<span>System Message</span>
+					<span>{t('System Message')}</span>
 				</button>
 
 				{#if hasMcpPromptsSupport}
@@ -287,7 +292,7 @@
 					>
 						<Zap class="h-4 w-4 shrink-0" />
 
-						<span>MCP Prompt</span>
+						<span>{t('MCP Prompt')}</span>
 					</button>
 				{/if}
 
@@ -299,7 +304,7 @@
 					>
 						<FolderOpen class="h-4 w-4 shrink-0" />
 
-						<span>MCP Resources</span>
+						<span>{t('MCP Resources')}</span>
 					</button>
 				{/if}
 			</div>

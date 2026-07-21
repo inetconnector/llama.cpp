@@ -18,6 +18,7 @@ export enum AttachmentType {
  */
 export enum AttachmentMenuItemId {
 	IMAGES = 'images',
+	PHOTO = 'photo',
 	AUDIO = 'audio',
 	VIDEO = 'video',
 	TEXT = 'text',
@@ -42,6 +43,7 @@ export enum AttachmentItemEnabledWhen {
  */
 export enum AttachmentAction {
 	FILE_UPLOAD = 'onFileUpload',
+	PHOTO_CLICK = 'onPhotoClick',
 	SYSTEM_PROMPT_CLICK = 'onSystemPromptClick',
 	MCP_PROMPT_CLICK = 'onMcpPromptClick',
 	MCP_RESOURCES_CLICK = 'onMcpResourcesClick'

@@ -2,6 +2,7 @@
 	import type { MCPPromptInfo } from '$lib/types';
 	import ChatFormPromptPickerArgumentInput from './ChatFormPromptPickerArgumentInput.svelte';
 	import { Button } from '$lib/components/ui/button';
+	import { t } from '$lib/i18n';
 
 	interface Props {
 		prompt: MCPPromptInfo;
@@ -67,8 +68,8 @@
 	{/if}
 
 	<div class="mt-8 flex justify-end gap-2">
-		<Button type="button" size="sm" onclick={onCancel} variant="secondary">Cancel</Button>
+		<Button type="button" size="sm" onclick={onCancel} variant="secondary">{t('Cancel')}</Button>
 
-		<Button size="sm" type="submit">Use Prompt</Button>
+		<Button size="sm" type="submit">{t('Use Prompt')}</Button>
 	</div>
 </form>

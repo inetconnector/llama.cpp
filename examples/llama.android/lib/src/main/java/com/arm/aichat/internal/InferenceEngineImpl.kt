@@ -166,7 +166,12 @@ internal class InferenceEngineImpl private constructor(
                 _state.value = InferenceEngine.State.LoadingModel
                 load(pathToModel).let {
                     // TODO-han.yin: find a better way to pass other error codes
-                    if (it != 0) throw UnsupportedArchitectureException()
+                    if (it != 0) {
+                        val error = UnsupportedArchitectureException()
+                        Log.e(TAG, "Unsupported model architecture\n$pathToModel", error)
+                        _state.value = InferenceEngine.State.Error(error)
+                        return@withContext
+                    }
                 }
                 prepare().let {
                     if (it != 0) throw IOException("Failed to prepare resources")

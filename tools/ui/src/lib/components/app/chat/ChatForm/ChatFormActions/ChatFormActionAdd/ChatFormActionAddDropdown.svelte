@@ -15,6 +15,7 @@
 		ChatFormActionAddReasoningSubmenu
 	} from '$lib/components/app';
 	import { useAttachmentMenu } from '$lib/hooks/use-attachment-menu.svelte';
+	import { t } from '$lib/i18n';
 
 	interface Props {
 		class?: string;
@@ -25,6 +26,7 @@
 		hasMcpPromptsSupport?: boolean;
 		hasMcpResourcesSupport?: boolean;
 		onFileUpload?: () => void;
+		onPhotoClick?: () => void;
 		onSystemPromptClick?: () => void;
 		onMcpPromptClick?: () => void;
 		onMcpSettingsClick?: () => void;
@@ -40,6 +42,7 @@
 		hasMcpPromptsSupport = false,
 		hasMcpResourcesSupport = false,
 		onFileUpload,
+		onPhotoClick,
 		onSystemPromptClick,
 		onMcpPromptClick,
 		onMcpSettingsClick,
@@ -61,7 +64,13 @@
 			hasMcpPromptsSupport,
 			hasMcpResourcesSupport
 		}),
-		() => ({ onFileUpload, onSystemPromptClick, onMcpPromptClick, onMcpResourcesClick }),
+		() => ({
+			onFileUpload,
+			onPhotoClick,
+			onSystemPromptClick,
+			onMcpPromptClick,
+			onMcpResourcesClick
+		}),
 		() => {
 			dropdownOpen = false;
 		}
@@ -102,7 +111,7 @@
 				<DropdownMenu.SubTrigger class="flex cursor-pointer items-center gap-2">
 					<File class="h-4 w-4" />
 
-					<span>Add files</span>
+					<span>{t('Add files')}</span>
 				</DropdownMenu.SubTrigger>
 
 				<DropdownMenu.SubContent class="w-48">
@@ -149,7 +158,7 @@
 			>
 				<MessageSquare class="h-4 w-4" />
 
-				<span>System Message</span>
+				<span>{t('System Message')}</span>
 			</DropdownMenu.Item>
 
 			<ChatFormActionAddToolsSubmenu />
@@ -165,7 +174,7 @@
 				>
 					<Zap class="h-4 w-4" />
 
-					<span>MCP Prompt</span>
+					<span>{t('MCP Prompt')}</span>
 				</DropdownMenu.Item>
 			{/if}
 
@@ -176,7 +185,7 @@
 				>
 					<FolderOpen class="h-4 w-4" />
 
-					<span>MCP Resources</span>
+					<span>{t('MCP Resources')}</span>
 				</DropdownMenu.Item>
 			{/if}
 		</DropdownMenu.Content>

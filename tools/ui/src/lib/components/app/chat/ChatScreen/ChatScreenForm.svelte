@@ -75,13 +75,14 @@
 		onFileUpload?.(files);
 	}
 
-	async function handleSubmit() {
-		if ((!message.trim() && uploadedFiles.length === 0) || disabled || hasLoadingAttachments)
+	async function handleSubmit(messageOverride?: string) {
+		const currentMessage = messageOverride ?? message;
+		if ((!currentMessage.trim() && uploadedFiles.length === 0) || disabled || hasLoadingAttachments)
 			return;
 
 		if (!chatFormRef?.checkModelSelected()) return;
 
-		const messageToSend = message.trim();
+		const messageToSend = currentMessage.trim();
 		const filesToSend = [...uploadedFiles];
 
 		message = '';
