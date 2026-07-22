@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Download, Upload, Trash2 } from '@lucide/svelte';
+	import { BookOpenCheck, Download, Upload, Trash2 } from '@lucide/svelte';
 	import {
 		DialogConversationSelection,
 		DialogConfirmation,
@@ -13,6 +13,7 @@
 	import { ConversationSelectionMode, HtmlInputType, FileExtensionText } from '$lib/enums';
 	import SettingsChatImportExportSection from './SettingsChatImportExportSection.svelte';
 	import SettingsGroup from '$lib/components/app/settings/SettingsGroup.svelte';
+	import { t } from '$lib/i18n';
 
 	let exportedConversations = $state<DatabaseConversation[]>([]);
 	let importedConversations = $state<DatabaseConversation[]>([]);
@@ -104,6 +105,19 @@
 			console.error('Failed to open file picker:', err);
 			toast.error('Failed to open file picker');
 		}
+	}
+
+	function handleOfflineReferences() {
+		const bridge = (
+			window as Window & {
+				AndroidKnowledgeBridge?: { openKnowledgeModules?: () => void };
+			}
+		).AndroidKnowledgeBridge;
+		if (typeof bridge?.openKnowledgeModules === 'function') {
+			bridge.openKnowledgeModules();
+			return;
+		}
+		toast.info(t('Offline references are available in the Android app'));
 	}
 
 	async function handleExportClick() {
@@ -291,6 +305,19 @@
 			buttonText="Import settings"
 			onclick={handleSettingsImport}
 			summary={{ show: showSettingsImportSummary, verb: 'Imported', items: [] }}
+		/>
+	</SettingsGroup>
+
+	<SettingsGroup title={t('Offline references')}>
+		<SettingsChatImportExportSection
+			title={t('Official offline data')}
+			description={t(
+				'DMC includes no classification data. Obtain it from the official publisher, accept its terms, and import the unchanged file for fully offline use.'
+			)}
+			IconComponent={BookOpenCheck}
+			buttonText={t('Manage offline references')}
+			onclick={handleOfflineReferences}
+			summary={{ show: false, verb: '', items: [] }}
 		/>
 	</SettingsGroup>
 </div>

@@ -47,11 +47,13 @@ import {
 	NON_ALPHANUMERIC_REGEX,
 	MULTIPLE_UNDERSCORE_REGEX,
 	SETTINGS_KEYS,
-	REASONING_EFFORT_DEFAULT_LOCALSTORAGE_KEY
+	REASONING_EFFORT_DEFAULT_LOCALSTORAGE_KEY,
+	LAST_ACTIVE_CONVERSATION_LOCALSTORAGE_KEY
 } from '$lib/constants';
 
 import { ROUTES } from '$lib/constants/routes';
 import { RouterService } from '$lib/services/router.service';
+import { resolveRestorableConversationId } from '$lib/utils/conversation-restore';
 import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 
 export interface ConversationTreeItem {
@@ -264,6 +266,29 @@ class ConversationsStore {
 		this.conversations = conversations;
 	}
 
+	/** Returns the last opened conversation, falling back to the newest stored chat. */
+	getRestorableConversationId(): string | null {
+		let persistedId: string | null = null;
+		try {
+			persistedId = localStorage.getItem(LAST_ACTIVE_CONVERSATION_LOCALSTORAGE_KEY);
+		} catch {
+			// IndexedDB remains the source of truth if localStorage is unavailable.
+		}
+
+		return resolveRestorableConversationId(
+			persistedId,
+			this.conversations.map((conversation) => conversation.id)
+		);
+	}
+
+	private rememberActiveConversation(convId: string): void {
+		try {
+			localStorage.setItem(LAST_ACTIVE_CONVERSATION_LOCALSTORAGE_KEY, convId);
+		} catch {
+			// Conversation data itself is already durable in IndexedDB.
+		}
+	}
+
 	/**
 	 * Creates a new conversation and navigates to it
 	 * @param name - Optional name for the conversation
@@ -302,6 +327,7 @@ class ConversationsStore {
 		this.conversations = [conversation, ...this.conversations];
 		this.activeConversation = conversation;
 		this.activeMessages = [];
+		this.rememberActiveConversation(conversation.id);
 
 		await goto(RouterService.chat(conversation.id));
 
@@ -337,6 +363,7 @@ class ConversationsStore {
 				this.activeMessages = messages;
 			}
 
+			this.rememberActiveConversation(conversation.id);
 			return true;
 		} catch (error) {
 			console.error('Failed to load conversation:', error);

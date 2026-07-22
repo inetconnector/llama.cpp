@@ -1,4 +1,5 @@
 export const NEW_CHAT_PARAM = 'new_chat';
+export const RESTORE_CHAT_PARAM = 'restore_chat';
 
 /** Settings section slugs — used for routes and navigation. */
 export const SETTINGS_SECTION_SLUGS = {

@@ -5,12 +5,14 @@
 	import { modelsStore, modelOptions } from '$lib/stores/models.svelte';
 	import { onMount } from 'svelte';
 	import { page } from '$app/state';
-	import { replaceState } from '$app/navigation';
-	import { APP_NAME, NEW_CHAT_PARAM } from '$lib/constants';
+	import { goto, replaceState } from '$app/navigation';
+	import { APP_NAME, NEW_CHAT_PARAM, RESTORE_CHAT_PARAM } from '$lib/constants';
+	import { RouterService } from '$lib/services/router.service';
 
 	let qParam = $derived(page.url.searchParams.get('q'));
 	let modelParam = $derived(page.url.searchParams.get('model'));
 	let newChatParam = $derived(page.url.searchParams.get(NEW_CHAT_PARAM));
+	let restoreChatParam = $derived(page.url.searchParams.get(RESTORE_CHAT_PARAM));
 
 	// Dialog state for model not available error
 	let showModelNotAvailable = $state(false);
@@ -26,6 +28,7 @@
 		url.searchParams.delete('q');
 		url.searchParams.delete('model');
 		url.searchParams.delete(NEW_CHAT_PARAM);
+		url.searchParams.delete(RESTORE_CHAT_PARAM);
 
 		replaceState(url.toString(), {});
 	}
@@ -66,6 +69,21 @@
 	onMount(async () => {
 		if (!isConversationsInitialized()) {
 			await conversationsStore.initialize();
+		}
+
+		const shouldRestorePreviousChat =
+			restoreChatParam === 'true' &&
+			qParam === null &&
+			modelParam === null &&
+			newChatParam !== 'true';
+		if (shouldRestorePreviousChat) {
+			const conversationId = conversationsStore.getRestorableConversationId();
+			clearUrlParams();
+			if (conversationId) {
+				chatStore.clearUIState();
+				await goto(RouterService.chat(conversationId), { replaceState: true });
+				return;
+			}
 		}
 
 		conversationsStore.clearActiveConversation();

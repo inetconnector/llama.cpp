@@ -21,6 +21,11 @@ const RTL_LOCALES = new Set(['ar', 'fa', 'he', 'ur']);
 
 const TRANSLATIONS: Partial<Record<SupportedLocale, TranslationDict>> = {
 	de: {
+		'Offline references': 'Offline-Referenzen',
+		'Official offline data': 'Offizielle Offline-Daten',
+		'DMC includes no classification data. Obtain it from the official publisher, accept its terms, and import the unchanged file for fully offline use.': 'DMC enthält keine Klassifikationsdaten. Beziehe sie vom offiziellen Herausgeber, akzeptiere dessen Bedingungen und importiere die unveränderte Datei für die vollständige Offline-Nutzung.',
+		'Manage offline references': 'Offline-Referenzen verwalten',
+		'Offline references are available in the Android app': 'Offline-Referenzen sind in der Android-App verfügbar',
 		'Add to chat': 'Zum Chat hinzufügen',
 		'Add files': 'Dateien hinzufügen',
 		Images: 'Bilder',
@@ -276,6 +281,11 @@ const TRANSLATIONS: Partial<Record<SupportedLocale, TranslationDict>> = {
 			'Wähle aus, welche Unterhaltungen du importieren möchtest. Ausgewählte Unterhaltungen werden mit deinen bestehenden Unterhaltungen zusammengeführt.'
 	},
 	fr: {
+		'Offline references': 'Références hors ligne',
+		'Official offline data': 'Données hors ligne officielles',
+		'DMC includes no classification data. Obtain it from the official publisher, accept its terms, and import the unchanged file for fully offline use.': 'DMC ne contient aucune donnée de classification. Obtenez-la auprès de l’éditeur officiel, acceptez ses conditions et importez le fichier inchangé pour une utilisation entièrement hors ligne.',
+		'Manage offline references': 'Gérer les références hors ligne',
+		'Offline references are available in the Android app': 'Les références hors ligne sont disponibles dans l’application Android',
 		'Add to chat': 'Ajouter au chat',
 		'Add files': 'Ajouter des fichiers',
 		Images: 'Images',
@@ -534,6 +544,11 @@ const TRANSLATIONS: Partial<Record<SupportedLocale, TranslationDict>> = {
 			'Choisissez les conversations que vous souhaitez importer. Les conversations sélectionnées seront fusionnées avec vos conversations existantes.'
 	},
 	es: {
+		'Offline references': 'Referencias sin conexión',
+		'Official offline data': 'Datos oficiales sin conexión',
+		'DMC includes no classification data. Obtain it from the official publisher, accept its terms, and import the unchanged file for fully offline use.': 'DMC no incluye datos de clasificación. Obtenlos del editor oficial, acepta sus condiciones e importa el archivo sin cambios para usarlo totalmente sin conexión.',
+		'Manage offline references': 'Gestionar referencias sin conexión',
+		'Offline references are available in the Android app': 'Las referencias sin conexión están disponibles en la aplicación Android',
 		'Add to chat': 'Añadir al chat',
 		'Add files': 'Añadir archivos',
 		Images: 'Imágenes',
@@ -792,6 +807,11 @@ const TRANSLATIONS: Partial<Record<SupportedLocale, TranslationDict>> = {
 			'Elige qué conversaciones quieres importar. Las conversaciones seleccionadas se combinarán con tus conversaciones existentes.'
 	},
 	it: {
+		'Offline references': 'Riferimenti offline',
+		'Official offline data': 'Dati offline ufficiali',
+		'DMC includes no classification data. Obtain it from the official publisher, accept its terms, and import the unchanged file for fully offline use.': 'DMC non include dati di classificazione. Ottienili dall’editore ufficiale, accetta le condizioni e importa il file invariato per un uso completamente offline.',
+		'Manage offline references': 'Gestisci riferimenti offline',
+		'Offline references are available in the Android app': 'I riferimenti offline sono disponibili nell’app Android',
 		'Add to chat': 'Aggiungi alla chat',
 		'Add files': 'Aggiungi file',
 		Images: 'Immagini',
@@ -1050,6 +1070,11 @@ const TRANSLATIONS: Partial<Record<SupportedLocale, TranslationDict>> = {
 			'Scegli quali conversazioni vuoi importare. Le conversazioni selezionate verranno unite alle conversazioni esistenti.'
 	},
 	'pt-BR': {
+		'Offline references': 'Referências off-line',
+		'Official offline data': 'Dados oficiais off-line',
+		'DMC includes no classification data. Obtain it from the official publisher, accept its terms, and import the unchanged file for fully offline use.': 'O DMC não inclui dados de classificação. Obtenha-os do editor oficial, aceite os termos e importe o arquivo inalterado para uso totalmente off-line.',
+		'Manage offline references': 'Gerenciar referências off-line',
+		'Offline references are available in the Android app': 'As referências off-line estão disponíveis no aplicativo Android',
 		'Add to chat': 'Adicionar ao chat',
 		'Add files': 'Adicionar arquivos',
 		Images: 'Imagens',
@@ -1308,6 +1333,11 @@ const TRANSLATIONS: Partial<Record<SupportedLocale, TranslationDict>> = {
 			'Escolha quais conversas você quer importar. As conversas selecionadas serão mescladas com suas conversas existentes.'
 	},
 	nl: {
+		'Offline references': 'Offline referenties',
+		'Official offline data': 'Officiële offline gegevens',
+		'DMC includes no classification data. Obtain it from the official publisher, accept its terms, and import the unchanged file for fully offline use.': 'DMC bevat geen classificatiegegevens. Verkrijg deze van de officiële uitgever, accepteer de voorwaarden en importeer het ongewijzigde bestand voor volledig offline gebruik.',
+		'Manage offline references': 'Offline referenties beheren',
+		'Offline references are available in the Android app': 'Offline referenties zijn beschikbaar in de Android-app',
 		'Add to chat': 'Toevoegen aan chat',
 		'Add files': 'Bestanden toevoegen',
 		Images: 'Afbeeldingen',
@@ -1566,6 +1596,11 @@ const TRANSLATIONS: Partial<Record<SupportedLocale, TranslationDict>> = {
 			'Kies welke gesprekken je wilt importeren. De geselecteerde gesprekken worden samengevoegd met je bestaande gesprekken.'
 	},
 	pl: {
+		'Offline references': 'Źródła offline',
+		'Official offline data': 'Oficjalne dane offline',
+		'DMC includes no classification data. Obtain it from the official publisher, accept its terms, and import the unchanged file for fully offline use.': 'DMC nie zawiera danych klasyfikacyjnych. Uzyskaj je od oficjalnego wydawcy, zaakceptuj warunki i zaimportuj niezmieniony plik do pełnego użycia offline.',
+		'Manage offline references': 'Zarządzaj źródłami offline',
+		'Offline references are available in the Android app': 'Źródła offline są dostępne w aplikacji na Androida',
 		'Add to chat': 'Dodaj do czatu',
 		'Add files': 'Dodaj pliki',
 		Images: 'Obrazy',
@@ -1824,6 +1859,11 @@ const TRANSLATIONS: Partial<Record<SupportedLocale, TranslationDict>> = {
 			'Wybierz, które rozmowy chcesz zaimportować. Wybrane rozmowy zostaną scalone z istniejącymi rozmowami.'
 	},
 	tr: {
+		'Offline references': 'Çevrimdışı başvurular',
+		'Official offline data': 'Resmî çevrimdışı veriler',
+		'DMC includes no classification data. Obtain it from the official publisher, accept its terms, and import the unchanged file for fully offline use.': 'DMC sınıflandırma verilerini içermez. Verileri resmî yayıncıdan alın, koşulları kabul edin ve tamamen çevrimdışı kullanım için değiştirilmemiş dosyayı içe aktarın.',
+		'Manage offline references': 'Çevrimdışı başvuruları yönet',
+		'Offline references are available in the Android app': 'Çevrimdışı başvurular Android uygulamasında kullanılabilir',
 		'Add to chat': 'Sohbete ekle',
 		'Add files': 'Dosya ekle',
 		Images: 'Görseller',
