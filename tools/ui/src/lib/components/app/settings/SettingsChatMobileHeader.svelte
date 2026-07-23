@@ -110,6 +110,8 @@
 
 	<div
 		class="border-b border-border/30 py-2"
+		role="navigation"
+		aria-label="Settings sections"
 		onpointerdown={handleSwipePointerDown}
 		onpointerup={handleSwipePointerUp}
 		onpointercancel={handleSwipePointerCancel}

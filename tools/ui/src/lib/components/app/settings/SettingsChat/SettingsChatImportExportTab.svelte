@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { BookOpenCheck, Download, Upload, Trash2 } from '@lucide/svelte';
+	import { BookOpenCheck, Download, Upload, Trash2, ShieldCheck, Mail } from '@lucide/svelte';
 	import {
 		DialogConversationSelection,
 		DialogConfirmation,
@@ -118,6 +118,32 @@
 			return;
 		}
 		toast.info(t('Offline references are available in the Android app'));
+	}
+
+	function handlePrivacyPolicy() {
+		const bridge = (
+			window as Window & {
+				AndroidLegalBridge?: { openPrivacyPolicy?: () => void };
+			}
+		).AndroidLegalBridge;
+		if (typeof bridge?.openPrivacyPolicy === 'function') {
+			bridge.openPrivacyPolicy();
+			return;
+		}
+		window.open('https://inetconnector.github.io/DMC/privacy/', '_blank', 'noopener,noreferrer');
+	}
+
+	function handleContactSupport() {
+		const bridge = (
+			window as Window & {
+				AndroidLegalBridge?: { contactSupport?: () => void };
+			}
+		).AndroidLegalBridge;
+		if (typeof bridge?.contactSupport === 'function') {
+			bridge.contactSupport();
+			return;
+		}
+		window.location.href = 'mailto:apps@inetconnector.com?subject=InetMind%20support';
 	}
 
 	async function handleExportClick() {
@@ -317,6 +343,30 @@
 			IconComponent={BookOpenCheck}
 			buttonText={t('Manage offline references')}
 			onclick={handleOfflineReferences}
+			summary={{ show: false, verb: '', items: [] }}
+		/>
+	</SettingsGroup>
+
+	<SettingsGroup title={t('Privacy and support')}>
+		<SettingsChatImportExportSection
+			title={t('Privacy policy')}
+			description={t(
+				'Read how InetMind handles local chats, attachments, diagnostics and optional network connections.'
+			)}
+			IconComponent={ShieldCheck}
+			buttonText={t('Open privacy policy')}
+			onclick={handlePrivacyPolicy}
+			summary={{ show: false, verb: '', items: [] }}
+		/>
+
+		<SettingsChatImportExportSection
+			title={t('Support and content reports')}
+			description={t(
+				'Contact the developer. AI responses can also be reported directly from the flag button below each response.'
+			)}
+			IconComponent={Mail}
+			buttonText={t('Contact support')}
+			onclick={handleContactSupport}
 			summary={{ show: false, verb: '', items: [] }}
 		/>
 	</SettingsGroup>

@@ -2,7 +2,7 @@
 	interface Props {
 		class?: string;
 		accept?: string;
-		capture?: string;
+		capture?: boolean | 'user' | 'environment' | null;
 		multiple?: boolean;
 		onFileSelect?: (files: File[]) => void;
 	}

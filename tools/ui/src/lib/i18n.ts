@@ -1,16 +1,6 @@
 import { browser } from '$app/environment';
 
-export const SUPPORTED_LOCALES = [
-	'en',
-	'de',
-	'fr',
-	'es',
-	'it',
-	'pt-BR',
-	'nl',
-	'pl',
-	'tr'
-] as const;
+export const SUPPORTED_LOCALES = ['en', 'de', 'fr', 'es', 'it', 'pt-BR', 'nl', 'pl', 'tr'] as const;
 
 export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
 type TemplateValues = Record<string, string | number>;
@@ -23,9 +13,21 @@ const TRANSLATIONS: Partial<Record<SupportedLocale, TranslationDict>> = {
 	de: {
 		'Offline references': 'Offline-Referenzen',
 		'Official offline data': 'Offizielle Offline-Daten',
-		'DMC includes no classification data. Obtain it from the official publisher, accept its terms, and import the unchanged file for fully offline use.': 'DMC enthält keine Klassifikationsdaten. Beziehe sie vom offiziellen Herausgeber, akzeptiere dessen Bedingungen und importiere die unveränderte Datei für die vollständige Offline-Nutzung.',
+		'DMC includes no classification data. Obtain it from the official publisher, accept its terms, and import the unchanged file for fully offline use.':
+			'DMC enthält keine Klassifikationsdaten. Beziehe sie vom offiziellen Herausgeber, akzeptiere dessen Bedingungen und importiere die unveränderte Datei für die vollständige Offline-Nutzung.',
 		'Manage offline references': 'Offline-Referenzen verwalten',
-		'Offline references are available in the Android app': 'Offline-Referenzen sind in der Android-App verfügbar',
+		'Report response': 'Antwort melden',
+		'Privacy and support': 'Datenschutz und Support',
+		'Privacy policy': 'Datenschutzerklärung',
+		'Read how InetMind handles local chats, attachments, diagnostics and optional network connections.':
+			'Lies nach, wie InetMind lokale Chats, Anhänge, Diagnosedaten und optionale Netzwerkverbindungen verarbeitet.',
+		'Open privacy policy': 'Datenschutzerklärung öffnen',
+		'Support and content reports': 'Support und Inhaltsmeldungen',
+		'Contact the developer. AI responses can also be reported directly from the flag button below each response.':
+			'Kontaktiere den Entwickler. KI-Antworten können außerdem direkt über die Meldefahne unter jeder Antwort gemeldet werden.',
+		'Contact support': 'Support kontaktieren',
+		'Offline references are available in the Android app':
+			'Offline-Referenzen sind in der Android-App verfügbar',
 		'Add to chat': 'Zum Chat hinzufügen',
 		'Add files': 'Dateien hinzufügen',
 		Images: 'Bilder',
@@ -114,7 +116,7 @@ const TRANSLATIONS: Partial<Record<SupportedLocale, TranslationDict>> = {
 		'Speculative decoding enabled': 'Spekulatives Decoding aktiviert',
 		'Search conversations...': 'Konversationen suchen...',
 		'Search...': 'Suchen...',
-		'Summary': 'Zusammenfassung',
+		Summary: 'Zusammenfassung',
 		'Agentic summary': 'Agentische Zusammenfassung',
 		Send: 'Senden',
 		'Conversation Name': 'Gesprächsname',
@@ -164,12 +166,13 @@ const TRANSLATIONS: Partial<Record<SupportedLocale, TranslationDict>> = {
 		'Built-in Tools': 'integrierte Werkzeuge',
 		'MCP Tools': 'MCP-Werkzeuge',
 		'No MCP servers configured yet.': 'Noch keine MCP-Server konfiguriert.',
-		'Add one to enable agentic features.': 'Füge einen hinzu, um agentische Funktionen zu aktivieren.',
+		'Add one to enable agentic features.':
+			'Füge einen hinzu, um agentische Funktionen zu aktivieren.',
 		'System message with actions': 'Systemnachricht mit Aktionen',
 		'Assistant message with actions': 'Antwort mit Aktionen',
 		'Prompt tokens evaluated': 'Prompt-Token ausgewertet',
 		'Tokens generated': 'Token generiert',
-		'Prompt': 'Prompt',
+		Prompt: 'Prompt',
 		Generated: 'Generiert',
 		'KV cache total': 'KV-Cache gesamt',
 		'Avg speed': 'Durchschnittsgeschwindigkeit',
@@ -224,7 +227,7 @@ const TRANSLATIONS: Partial<Record<SupportedLocale, TranslationDict>> = {
 		'Save settings': 'Einstellungen speichern',
 		'Reset Settings to Default': 'Einstellungen auf Standard zurücksetzen',
 		Confirm: 'Bestätigen',
-		'Are you sure you want to reset all settings to their default values? This will reset all parameters to the values provided by the server\'s /props endpoint and remove all your custom configurations.':
+		"Are you sure you want to reset all settings to their default values? This will reset all parameters to the values provided by the server's /props endpoint and remove all your custom configurations.":
 			'Soll wirklich alles auf die Standardwerte zurückgesetzt werden? Dadurch werden alle Parameter auf die Werte des /props-Endpunkts des Servers zurückgesetzt und alle eigenen Konfigurationen entfernt.',
 		'Reset to Default': 'Auf Standard zurücksetzen',
 		'Do more with MCP': 'Mehr mit MCP',
@@ -252,7 +255,8 @@ const TRANSLATIONS: Partial<Record<SupportedLocale, TranslationDict>> = {
 		'Cannot connect to server - check if server is running':
 			'Keine Verbindung zum Server möglich - prüfe, ob der Server läuft',
 		'Connection error - please try again': 'Verbindungsfehler - bitte erneut versuchen',
-		'API key validated successfully! Connecting...': 'API-Schlüssel erfolgreich validiert! Verbinde...',
+		'API key validated successfully! Connecting...':
+			'API-Schlüssel erfolgreich validiert! Verbinde...',
 		'Validating...': 'Wird validiert...',
 		'Success!': 'Erfolg!',
 		'Save & Retry': 'Speichern und erneut versuchen',
@@ -265,7 +269,6 @@ const TRANSLATIONS: Partial<Record<SupportedLocale, TranslationDict>> = {
 			'Prüfe, ob der Server unter der richtigen URL erreichbar ist',
 		'Verify your network connection': 'Prüfe deine Netzwerkverbindung',
 		'Check server logs for any error messages': 'Prüfe die Serverprotokolle auf Fehlermeldungen',
-		'MCP Resources': 'MCP-Ressourcen',
 		'Browse and attach resources from connected MCP servers to your chat context.':
 			'Durchsuche und hänge Ressourcen von verbundenen MCP-Servern an deinen Chat-Kontext an.',
 		'Failed to read resource': 'Ressource konnte nicht gelesen werden',
@@ -283,9 +286,21 @@ const TRANSLATIONS: Partial<Record<SupportedLocale, TranslationDict>> = {
 	fr: {
 		'Offline references': 'Références hors ligne',
 		'Official offline data': 'Données hors ligne officielles',
-		'DMC includes no classification data. Obtain it from the official publisher, accept its terms, and import the unchanged file for fully offline use.': 'DMC ne contient aucune donnée de classification. Obtenez-la auprès de l’éditeur officiel, acceptez ses conditions et importez le fichier inchangé pour une utilisation entièrement hors ligne.',
+		'DMC includes no classification data. Obtain it from the official publisher, accept its terms, and import the unchanged file for fully offline use.':
+			'DMC ne contient aucune donnée de classification. Obtenez-la auprès de l’éditeur officiel, acceptez ses conditions et importez le fichier inchangé pour une utilisation entièrement hors ligne.',
 		'Manage offline references': 'Gérer les références hors ligne',
-		'Offline references are available in the Android app': 'Les références hors ligne sont disponibles dans l’application Android',
+		'Report response': 'Signaler la réponse',
+		'Privacy and support': 'Confidentialité et assistance',
+		'Privacy policy': 'Politique de confidentialité',
+		'Read how InetMind handles local chats, attachments, diagnostics and optional network connections.':
+			'Découvrez comment InetMind traite les discussions locales, les pièces jointes, les diagnostics et les connexions réseau facultatives.',
+		'Open privacy policy': 'Ouvrir la politique de confidentialité',
+		'Support and content reports': 'Assistance et signalement de contenu',
+		'Contact the developer. AI responses can also be reported directly from the flag button below each response.':
+			'Contactez le développeur. Les réponses de l’IA peuvent aussi être signalées directement avec le drapeau sous chaque réponse.',
+		'Contact support': 'Contacter l’assistance',
+		'Offline references are available in the Android app':
+			'Les références hors ligne sont disponibles dans l’application Android',
 		'Add to chat': 'Ajouter au chat',
 		'Add files': 'Ajouter des fichiers',
 		Images: 'Images',
@@ -374,7 +389,7 @@ const TRANSLATIONS: Partial<Record<SupportedLocale, TranslationDict>> = {
 		'Speculative decoding enabled': 'Décodage spéculatif activé',
 		'Search conversations...': 'Rechercher des conversations...',
 		'Search...': 'Rechercher...',
-		'Summary': 'Résumé',
+		Summary: 'Résumé',
 		'Agentic summary': 'Résumé agentique',
 		Send: 'Envoyer',
 		'Conversation Name': 'Nom de la conversation',
@@ -419,7 +434,7 @@ const TRANSLATIONS: Partial<Record<SupportedLocale, TranslationDict>> = {
 		'Assistant message with actions': 'Message assistant avec actions',
 		'Prompt tokens evaluated': 'Jetons du prompt évalués',
 		'Tokens generated': 'Jetons générés',
-		'Prompt': 'Prompt',
+		Prompt: 'Prompt',
 		Generated: 'Généré',
 		'KV cache total': 'Cache KV total',
 		'Avg speed': 'Vitesse moyenne',
@@ -485,7 +500,7 @@ const TRANSLATIONS: Partial<Record<SupportedLocale, TranslationDict>> = {
 		'Save settings': 'Enregistrer les paramètres',
 		'Reset Settings to Default': 'Réinitialiser les paramètres par défaut',
 		Confirm: 'Confirmer',
-		'Are you sure you want to reset all settings to their default values? This will reset all parameters to the values provided by the server\'s /props endpoint and remove all your custom configurations.':
+		"Are you sure you want to reset all settings to their default values? This will reset all parameters to the values provided by the server's /props endpoint and remove all your custom configurations.":
 			'Voulez-vous vraiment réinitialiser tous les paramètres à leurs valeurs par défaut ? Cela réinitialisera tous les paramètres aux valeurs fournies par le point de terminaison /props du serveur et supprimera toutes vos configurations personnalisées.',
 		'Reset to Default': 'Réinitialiser par défaut',
 		'Do more with MCP': 'Faites plus avec MCP',
@@ -497,8 +512,8 @@ const TRANSLATIONS: Partial<Record<SupportedLocale, TranslationDict>> = {
 		'Add {{count}} servers': 'Ajouter {{count}} serveurs',
 		'Add {{recommended}} servers and {{custom}} custom':
 			'Ajouter {{recommended}} serveurs et {{custom}} personnalisés',
-		'URL is required': "L’URL est requise",
-		'Invalid URL format': "Format d’URL invalide",
+		'URL is required': 'L’URL est requise',
+		'Invalid URL format': 'Format d’URL invalide',
 		Add: 'Ajouter',
 		'Not now': 'Pas maintenant',
 		'Add your own MCP server': 'Ajouter votre propre serveur MCP',
@@ -507,8 +522,7 @@ const TRANSLATIONS: Partial<Record<SupportedLocale, TranslationDict>> = {
 		'Enter API Key': 'Saisir la clé API',
 		'API Key': 'Clé API',
 		'Enter your API key...': 'Saisissez votre clé API...',
-		'Invalid API key - please check and try again':
-			'Clé API invalide - vérifiez et réessayez',
+		'Invalid API key - please check and try again': 'Clé API invalide - vérifiez et réessayez',
 		'Authentication failed ({{status}})': 'Échec de l’authentification ({{status}})',
 		'Cannot connect to server - check if server is running':
 			'Impossible de se connecter au serveur - vérifiez qu’il est en cours d’exécution',
@@ -528,7 +542,6 @@ const TRANSLATIONS: Partial<Record<SupportedLocale, TranslationDict>> = {
 		'Verify your network connection': 'Vérifiez votre connexion réseau',
 		'Check server logs for any error messages':
 			'Vérifiez les journaux du serveur pour tout message d’erreur',
-		'MCP Resources': 'Ressources MCP',
 		'Browse and attach resources from connected MCP servers to your chat context.':
 			'Parcourez et joignez des ressources provenant de serveurs MCP connectés à votre contexte de chat.',
 		'Failed to read resource': 'Échec de la lecture de la ressource',
@@ -546,9 +559,21 @@ const TRANSLATIONS: Partial<Record<SupportedLocale, TranslationDict>> = {
 	es: {
 		'Offline references': 'Referencias sin conexión',
 		'Official offline data': 'Datos oficiales sin conexión',
-		'DMC includes no classification data. Obtain it from the official publisher, accept its terms, and import the unchanged file for fully offline use.': 'DMC no incluye datos de clasificación. Obtenlos del editor oficial, acepta sus condiciones e importa el archivo sin cambios para usarlo totalmente sin conexión.',
+		'DMC includes no classification data. Obtain it from the official publisher, accept its terms, and import the unchanged file for fully offline use.':
+			'DMC no incluye datos de clasificación. Obtenlos del editor oficial, acepta sus condiciones e importa el archivo sin cambios para usarlo totalmente sin conexión.',
 		'Manage offline references': 'Gestionar referencias sin conexión',
-		'Offline references are available in the Android app': 'Las referencias sin conexión están disponibles en la aplicación Android',
+		'Report response': 'Denunciar respuesta',
+		'Privacy and support': 'Privacidad y asistencia',
+		'Privacy policy': 'Política de privacidad',
+		'Read how InetMind handles local chats, attachments, diagnostics and optional network connections.':
+			'Consulta cómo InetMind trata los chats locales, los archivos adjuntos, los diagnósticos y las conexiones de red opcionales.',
+		'Open privacy policy': 'Abrir política de privacidad',
+		'Support and content reports': 'Asistencia y denuncias de contenido',
+		'Contact the developer. AI responses can also be reported directly from the flag button below each response.':
+			'Contacta con el desarrollador. También puedes denunciar respuestas de IA con la bandera situada bajo cada respuesta.',
+		'Contact support': 'Contactar con asistencia',
+		'Offline references are available in the Android app':
+			'Las referencias sin conexión están disponibles en la aplicación Android',
 		'Add to chat': 'Añadir al chat',
 		'Add files': 'Añadir archivos',
 		Images: 'Imágenes',
@@ -637,7 +662,7 @@ const TRANSLATIONS: Partial<Record<SupportedLocale, TranslationDict>> = {
 		'Speculative decoding enabled': 'Decodificación especulativa activada',
 		'Search conversations...': 'Buscar conversaciones...',
 		'Search...': 'Buscar...',
-		'Summary': 'Resumen',
+		Summary: 'Resumen',
 		'Agentic summary': 'Resumen agentivo',
 		Send: 'Enviar',
 		'Conversation Name': 'Nombre de la conversación',
@@ -682,7 +707,7 @@ const TRANSLATIONS: Partial<Record<SupportedLocale, TranslationDict>> = {
 		'Assistant message with actions': 'Mensaje del asistente con acciones',
 		'Prompt tokens evaluated': 'Tokens del prompt evaluados',
 		'Tokens generated': 'Tokens generados',
-		'Prompt': 'Prompt',
+		Prompt: 'Prompt',
 		Generated: 'Generado',
 		'KV cache total': 'Caché KV total',
 		'Avg speed': 'Velocidad media',
@@ -748,7 +773,7 @@ const TRANSLATIONS: Partial<Record<SupportedLocale, TranslationDict>> = {
 		'Save settings': 'Guardar ajustes',
 		'Reset Settings to Default': 'Restablecer ajustes por defecto',
 		Confirm: 'Confirmar',
-		'Are you sure you want to reset all settings to their default values? This will reset all parameters to the values provided by the server\'s /props endpoint and remove all your custom configurations.':
+		"Are you sure you want to reset all settings to their default values? This will reset all parameters to the values provided by the server's /props endpoint and remove all your custom configurations.":
 			'¿Seguro que quieres restablecer todos los ajustes a sus valores predeterminados? Esto restablecerá todos los parámetros a los valores proporcionados por el endpoint /props del servidor y eliminará todas tus configuraciones personalizadas.',
 		'Reset to Default': 'Restablecer por defecto',
 		'Do more with MCP': 'Haz más con MCP',
@@ -791,7 +816,6 @@ const TRANSLATIONS: Partial<Record<SupportedLocale, TranslationDict>> = {
 		'Verify your network connection': 'Verifica tu conexión de red',
 		'Check server logs for any error messages':
 			'Revisa los registros del servidor en busca de mensajes de error',
-		'MCP Resources': 'Recursos MCP',
 		'Browse and attach resources from connected MCP servers to your chat context.':
 			'Explora y adjunta recursos de servidores MCP conectados a tu contexto de chat.',
 		'Failed to read resource': 'Error al leer el recurso',
@@ -809,9 +833,21 @@ const TRANSLATIONS: Partial<Record<SupportedLocale, TranslationDict>> = {
 	it: {
 		'Offline references': 'Riferimenti offline',
 		'Official offline data': 'Dati offline ufficiali',
-		'DMC includes no classification data. Obtain it from the official publisher, accept its terms, and import the unchanged file for fully offline use.': 'DMC non include dati di classificazione. Ottienili dall’editore ufficiale, accetta le condizioni e importa il file invariato per un uso completamente offline.',
+		'DMC includes no classification data. Obtain it from the official publisher, accept its terms, and import the unchanged file for fully offline use.':
+			'DMC non include dati di classificazione. Ottienili dall’editore ufficiale, accetta le condizioni e importa il file invariato per un uso completamente offline.',
 		'Manage offline references': 'Gestisci riferimenti offline',
-		'Offline references are available in the Android app': 'I riferimenti offline sono disponibili nell’app Android',
+		'Report response': 'Segnala risposta',
+		'Privacy and support': 'Privacy e assistenza',
+		'Privacy policy': 'Informativa sulla privacy',
+		'Read how InetMind handles local chats, attachments, diagnostics and optional network connections.':
+			'Scopri come InetMind gestisce chat locali, allegati, dati diagnostici e connessioni di rete facoltative.',
+		'Open privacy policy': 'Apri informativa sulla privacy',
+		'Support and content reports': 'Assistenza e segnalazioni di contenuti',
+		'Contact the developer. AI responses can also be reported directly from the flag button below each response.':
+			'Contatta lo sviluppatore. Puoi anche segnalare le risposte IA con la bandierina sotto ogni risposta.',
+		'Contact support': 'Contatta assistenza',
+		'Offline references are available in the Android app':
+			'I riferimenti offline sono disponibili nell’app Android',
 		'Add to chat': 'Aggiungi alla chat',
 		'Add files': 'Aggiungi file',
 		Images: 'Immagini',
@@ -900,7 +936,7 @@ const TRANSLATIONS: Partial<Record<SupportedLocale, TranslationDict>> = {
 		'Speculative decoding enabled': 'Decodifica speculativa abilitata',
 		'Search conversations...': 'Cerca conversazioni...',
 		'Search...': 'Cerca...',
-		'Summary': 'Riepilogo',
+		Summary: 'Riepilogo',
 		'Agentic summary': 'Riepilogo agentico',
 		Send: 'Invia',
 		'Conversation Name': 'Nome conversazione',
@@ -945,7 +981,7 @@ const TRANSLATIONS: Partial<Record<SupportedLocale, TranslationDict>> = {
 		'Assistant message with actions': 'Messaggio assistente con azioni',
 		'Prompt tokens evaluated': 'Token del prompt valutati',
 		'Tokens generated': 'Token generati',
-		'Prompt': 'Prompt',
+		Prompt: 'Prompt',
 		Generated: 'Generato',
 		'KV cache total': 'Cache KV totale',
 		'Avg speed': 'Velocità media',
@@ -968,8 +1004,7 @@ const TRANSLATIONS: Partial<Record<SupportedLocale, TranslationDict>> = {
 		'MCP servers': 'server MCP',
 		'Add files, system prompt or configure MCP servers':
 			'Aggiungi file, un prompt di sistema o configura i server MCP',
-		'Add files, prompts, tools or MCP Servers':
-			'Aggiungi file, prompt, strumenti o server MCP',
+		'Add files, prompts, tools or MCP Servers': 'Aggiungi file, prompt, strumenti o server MCP',
 		'Try again': 'Riprova',
 		'Select a resource to preview': 'Seleziona una risorsa da visualizzare in anteprima',
 		'Attach Resource': 'Allega risorsa',
@@ -988,8 +1023,7 @@ const TRANSLATIONS: Partial<Record<SupportedLocale, TranslationDict>> = {
 		Logging: 'Registrazione',
 		Completions: 'Completamenti',
 		Tasks: 'Attività',
-		'{{count}} tools available · Show details':
-			'{{count}} strumenti disponibili · Mostra dettagli',
+		'{{count}} tools available · Show details': '{{count}} strumenti disponibili · Mostra dettagli',
 		'+ {{count}} more tools': '+ {{count}} strumenti in più',
 		'Update Conversation Title?': 'Aggiornare il titolo della conversazione?',
 		'Do you want to update the conversation title to match the first message content?':
@@ -1011,7 +1045,7 @@ const TRANSLATIONS: Partial<Record<SupportedLocale, TranslationDict>> = {
 		'Save settings': 'Salva impostazioni',
 		'Reset Settings to Default': 'Ripristina impostazioni predefinite',
 		Confirm: 'Conferma',
-		'Are you sure you want to reset all settings to their default values? This will reset all parameters to the values provided by the server\'s /props endpoint and remove all your custom configurations.':
+		"Are you sure you want to reset all settings to their default values? This will reset all parameters to the values provided by the server's /props endpoint and remove all your custom configurations.":
 			'Sei sicuro di voler ripristinare tutte le impostazioni ai valori predefiniti? Questo reimposterà tutti i parametri ai valori forniti dall’endpoint /props del server e rimuoverà tutte le tue configurazioni personalizzate.',
 		'Reset to Default': 'Ripristina predefiniti',
 		'Do more with MCP': 'Fai di più con MCP',
@@ -1023,8 +1057,8 @@ const TRANSLATIONS: Partial<Record<SupportedLocale, TranslationDict>> = {
 		'Add {{count}} servers': 'Aggiungi {{count}} server',
 		'Add {{recommended}} servers and {{custom}} custom':
 			'Aggiungi {{recommended}} server e {{custom}} personalizzati',
-		'URL is required': "L’URL è obbligatorio",
-		'Invalid URL format': "Formato URL non valido",
+		'URL is required': 'L’URL è obbligatorio',
+		'Invalid URL format': 'Formato URL non valido',
 		Add: 'Aggiungi',
 		'Not now': 'Non ora',
 		'Add your own MCP server': 'Aggiungi il tuo server MCP',
@@ -1033,8 +1067,7 @@ const TRANSLATIONS: Partial<Record<SupportedLocale, TranslationDict>> = {
 		'Enter API Key': 'Inserisci chiave API',
 		'API Key': 'Chiave API',
 		'Enter your API key...': 'Inserisci la tua chiave API...',
-		'Invalid API key - please check and try again':
-			'Chiave API non valida - controlla e riprova',
+		'Invalid API key - please check and try again': 'Chiave API non valida - controlla e riprova',
 		'Authentication failed ({{status}})': 'Autenticazione non riuscita ({{status}})',
 		'Cannot connect to server - check if server is running':
 			'Impossibile connettersi al server - controlla che il server sia in esecuzione',
@@ -1054,7 +1087,6 @@ const TRANSLATIONS: Partial<Record<SupportedLocale, TranslationDict>> = {
 		'Verify your network connection': 'Verifica la tua connessione di rete',
 		'Check server logs for any error messages':
 			'Controlla i log del server per eventuali messaggi di errore',
-		'MCP Resources': 'Risorse MCP',
 		'Browse and attach resources from connected MCP servers to your chat context.':
 			'Esplora e allega risorse da server MCP connessi al contesto della chat.',
 		'Failed to read resource': 'Impossibile leggere la risorsa',
@@ -1072,9 +1104,21 @@ const TRANSLATIONS: Partial<Record<SupportedLocale, TranslationDict>> = {
 	'pt-BR': {
 		'Offline references': 'Referências off-line',
 		'Official offline data': 'Dados oficiais off-line',
-		'DMC includes no classification data. Obtain it from the official publisher, accept its terms, and import the unchanged file for fully offline use.': 'O DMC não inclui dados de classificação. Obtenha-os do editor oficial, aceite os termos e importe o arquivo inalterado para uso totalmente off-line.',
+		'DMC includes no classification data. Obtain it from the official publisher, accept its terms, and import the unchanged file for fully offline use.':
+			'O DMC não inclui dados de classificação. Obtenha-os do editor oficial, aceite os termos e importe o arquivo inalterado para uso totalmente off-line.',
 		'Manage offline references': 'Gerenciar referências off-line',
-		'Offline references are available in the Android app': 'As referências off-line estão disponíveis no aplicativo Android',
+		'Report response': 'Denunciar resposta',
+		'Privacy and support': 'Privacidade e suporte',
+		'Privacy policy': 'Política de privacidade',
+		'Read how InetMind handles local chats, attachments, diagnostics and optional network connections.':
+			'Saiba como o InetMind trata conversas locais, anexos, diagnósticos e conexões de rede opcionais.',
+		'Open privacy policy': 'Abrir política de privacidade',
+		'Support and content reports': 'Suporte e denúncias de conteúdo',
+		'Contact the developer. AI responses can also be reported directly from the flag button below each response.':
+			'Entre em contato com o desenvolvedor. As respostas de IA também podem ser denunciadas pela bandeira abaixo de cada resposta.',
+		'Contact support': 'Contatar suporte',
+		'Offline references are available in the Android app':
+			'As referências off-line estão disponíveis no aplicativo Android',
 		'Add to chat': 'Adicionar ao chat',
 		'Add files': 'Adicionar arquivos',
 		Images: 'Imagens',
@@ -1163,7 +1207,7 @@ const TRANSLATIONS: Partial<Record<SupportedLocale, TranslationDict>> = {
 		'Speculative decoding enabled': 'Decodificação especulativa ativada',
 		'Search conversations...': 'Pesquisar conversas...',
 		'Search...': 'Pesquisar...',
-		'Summary': 'Resumo',
+		Summary: 'Resumo',
 		'Agentic summary': 'Resumo agentivo',
 		Send: 'Enviar',
 		'Conversation Name': 'Nome da conversa',
@@ -1208,7 +1252,7 @@ const TRANSLATIONS: Partial<Record<SupportedLocale, TranslationDict>> = {
 		'Assistant message with actions': 'Mensagem do assistente com ações',
 		'Prompt tokens evaluated': 'Tokens do prompt avaliados',
 		'Tokens generated': 'Tokens gerados',
-		'Prompt': 'Prompt',
+		Prompt: 'Prompt',
 		Generated: 'Gerado',
 		'KV cache total': 'Cache KV total',
 		'Avg speed': 'Velocidade média',
@@ -1274,7 +1318,7 @@ const TRANSLATIONS: Partial<Record<SupportedLocale, TranslationDict>> = {
 		'Save settings': 'Salvar configurações',
 		'Reset Settings to Default': 'Redefinir configurações para o padrão',
 		Confirm: 'Confirmar',
-		'Are you sure you want to reset all settings to their default values? This will reset all parameters to the values provided by the server\'s /props endpoint and remove all your custom configurations.':
+		"Are you sure you want to reset all settings to their default values? This will reset all parameters to the values provided by the server's /props endpoint and remove all your custom configurations.":
 			'Tem certeza de que deseja redefinir todas as configurações para os valores padrão? Isso redefinirá todos os parâmetros para os valores fornecidos pelo endpoint /props do servidor e removerá todas as suas configurações personalizadas.',
 		'Reset to Default': 'Redefinir para o padrão',
 		'Do more with MCP': 'Faça mais com MCP',
@@ -1317,7 +1361,6 @@ const TRANSLATIONS: Partial<Record<SupportedLocale, TranslationDict>> = {
 		'Verify your network connection': 'Verifique sua conexão de rede',
 		'Check server logs for any error messages':
 			'Verifique os logs do servidor em busca de mensagens de erro',
-		'MCP Resources': 'Recursos MCP',
 		'Browse and attach resources from connected MCP servers to your chat context.':
 			'Navegue e anexe recursos de servidores MCP conectados ao contexto do chat.',
 		'Failed to read resource': 'Falha ao ler o recurso',
@@ -1335,9 +1378,21 @@ const TRANSLATIONS: Partial<Record<SupportedLocale, TranslationDict>> = {
 	nl: {
 		'Offline references': 'Offline referenties',
 		'Official offline data': 'Officiële offline gegevens',
-		'DMC includes no classification data. Obtain it from the official publisher, accept its terms, and import the unchanged file for fully offline use.': 'DMC bevat geen classificatiegegevens. Verkrijg deze van de officiële uitgever, accepteer de voorwaarden en importeer het ongewijzigde bestand voor volledig offline gebruik.',
+		'DMC includes no classification data. Obtain it from the official publisher, accept its terms, and import the unchanged file for fully offline use.':
+			'DMC bevat geen classificatiegegevens. Verkrijg deze van de officiële uitgever, accepteer de voorwaarden en importeer het ongewijzigde bestand voor volledig offline gebruik.',
 		'Manage offline references': 'Offline referenties beheren',
-		'Offline references are available in the Android app': 'Offline referenties zijn beschikbaar in de Android-app',
+		'Report response': 'Antwoord melden',
+		'Privacy and support': 'Privacy en ondersteuning',
+		'Privacy policy': 'Privacybeleid',
+		'Read how InetMind handles local chats, attachments, diagnostics and optional network connections.':
+			'Lees hoe InetMind lokale chats, bijlagen, diagnostiek en optionele netwerkverbindingen verwerkt.',
+		'Open privacy policy': 'Privacybeleid openen',
+		'Support and content reports': 'Ondersteuning en inhoudsmeldingen',
+		'Contact the developer. AI responses can also be reported directly from the flag button below each response.':
+			'Neem contact op met de ontwikkelaar. AI-antwoorden kunnen ook worden gemeld met de vlag onder elk antwoord.',
+		'Contact support': 'Contact opnemen',
+		'Offline references are available in the Android app':
+			'Offline referenties zijn beschikbaar in de Android-app',
 		'Add to chat': 'Toevoegen aan chat',
 		'Add files': 'Bestanden toevoegen',
 		Images: 'Afbeeldingen',
@@ -1426,7 +1481,7 @@ const TRANSLATIONS: Partial<Record<SupportedLocale, TranslationDict>> = {
 		'Speculative decoding enabled': 'Speculatieve decoding ingeschakeld',
 		'Search conversations...': 'Gesprekken zoeken...',
 		'Search...': 'Zoeken...',
-		'Summary': 'Samenvatting',
+		Summary: 'Samenvatting',
 		'Agentic summary': 'Agentische samenvatting',
 		Send: 'Verzenden',
 		'Conversation Name': 'Gespreksnaam',
@@ -1466,12 +1521,13 @@ const TRANSLATIONS: Partial<Record<SupportedLocale, TranslationDict>> = {
 			'Voeg MCP-servers toe of schakel ze in om toegang te krijgen tot <strong>MCP-tools</strong>.',
 		'Tool calls': 'Toolaanroepen',
 		'No MCP servers configured yet.': 'Nog geen MCP-servers geconfigureerd.',
-		'Add one to enable agentic features.': 'Voeg er één toe om agentische functies in te schakelen.',
+		'Add one to enable agentic features.':
+			'Voeg er één toe om agentische functies in te schakelen.',
 		'System message with actions': 'Systeembericht met acties',
 		'Assistant message with actions': 'Assistentbericht met acties',
 		'Prompt tokens evaluated': 'Prompttokens geëvalueerd',
 		'Tokens generated': 'Tokens gegenereerd',
-		'Prompt': 'Prompt',
+		Prompt: 'Prompt',
 		Generated: 'Gegenereerd',
 		'KV cache total': 'Totale KV-cache',
 		'Avg speed': 'Gem. snelheid',
@@ -1537,7 +1593,7 @@ const TRANSLATIONS: Partial<Record<SupportedLocale, TranslationDict>> = {
 		'Save settings': 'Instellingen opslaan',
 		'Reset Settings to Default': 'Instellingen standaard herstellen',
 		Confirm: 'Bevestigen',
-		'Are you sure you want to reset all settings to their default values? This will reset all parameters to the values provided by the server\'s /props endpoint and remove all your custom configurations.':
+		"Are you sure you want to reset all settings to their default values? This will reset all parameters to the values provided by the server's /props endpoint and remove all your custom configurations.":
 			'Weet je zeker dat je alle instellingen wilt terugzetten naar de standaardwaarden? Hiermee worden alle parameters teruggezet naar de waarden van het /props-eindpunt van de server en worden al je aangepaste configuraties verwijderd.',
 		'Reset to Default': 'Standaard herstellen',
 		'Do more with MCP': 'Doe meer met MCP',
@@ -1578,9 +1634,7 @@ const TRANSLATIONS: Partial<Record<SupportedLocale, TranslationDict>> = {
 		'Check that the server is accessible at the correct URL':
 			'Controleer of de server bereikbaar is via de juiste URL',
 		'Verify your network connection': 'Controleer je netwerkverbinding',
-		'Check server logs for any error messages':
-			'Controleer de serverlogs op foutmeldingen',
-		'MCP Resources': 'MCP-bronnen',
+		'Check server logs for any error messages': 'Controleer de serverlogs op foutmeldingen',
 		'Browse and attach resources from connected MCP servers to your chat context.':
 			'Blader door en koppel bronnen van verbonden MCP-servers aan je chatcontext.',
 		'Failed to read resource': 'Kan bron niet lezen',
@@ -1598,9 +1652,21 @@ const TRANSLATIONS: Partial<Record<SupportedLocale, TranslationDict>> = {
 	pl: {
 		'Offline references': 'Źródła offline',
 		'Official offline data': 'Oficjalne dane offline',
-		'DMC includes no classification data. Obtain it from the official publisher, accept its terms, and import the unchanged file for fully offline use.': 'DMC nie zawiera danych klasyfikacyjnych. Uzyskaj je od oficjalnego wydawcy, zaakceptuj warunki i zaimportuj niezmieniony plik do pełnego użycia offline.',
+		'DMC includes no classification data. Obtain it from the official publisher, accept its terms, and import the unchanged file for fully offline use.':
+			'DMC nie zawiera danych klasyfikacyjnych. Uzyskaj je od oficjalnego wydawcy, zaakceptuj warunki i zaimportuj niezmieniony plik do pełnego użycia offline.',
 		'Manage offline references': 'Zarządzaj źródłami offline',
-		'Offline references are available in the Android app': 'Źródła offline są dostępne w aplikacji na Androida',
+		'Report response': 'Zgłoś odpowiedź',
+		'Privacy and support': 'Prywatność i pomoc',
+		'Privacy policy': 'Polityka prywatności',
+		'Read how InetMind handles local chats, attachments, diagnostics and optional network connections.':
+			'Przeczytaj, jak InetMind obsługuje lokalne rozmowy, załączniki, diagnostykę i opcjonalne połączenia sieciowe.',
+		'Open privacy policy': 'Otwórz politykę prywatności',
+		'Support and content reports': 'Pomoc i zgłoszenia treści',
+		'Contact the developer. AI responses can also be reported directly from the flag button below each response.':
+			'Skontaktuj się z deweloperem. Odpowiedzi AI można też zgłaszać flagą pod każdą odpowiedzią.',
+		'Contact support': 'Skontaktuj się z pomocą',
+		'Offline references are available in the Android app':
+			'Źródła offline są dostępne w aplikacji na Androida',
 		'Add to chat': 'Dodaj do czatu',
 		'Add files': 'Dodaj pliki',
 		Images: 'Obrazy',
@@ -1689,7 +1755,7 @@ const TRANSLATIONS: Partial<Record<SupportedLocale, TranslationDict>> = {
 		'Speculative decoding enabled': 'Włączono dekodowanie spekulacyjne',
 		'Search conversations...': 'Szukaj rozmów...',
 		'Search...': 'Szukaj...',
-		'Summary': 'Podsumowanie',
+		Summary: 'Podsumowanie',
 		'Agentic summary': 'Podsumowanie agentowe',
 		Send: 'Wyślij',
 		'Conversation Name': 'Nazwa rozmowy',
@@ -1734,7 +1800,7 @@ const TRANSLATIONS: Partial<Record<SupportedLocale, TranslationDict>> = {
 		'Assistant message with actions': 'Wiadomość asystenta z akcjami',
 		'Prompt tokens evaluated': 'Tokeny promptu ocenione',
 		'Tokens generated': 'Wygenerowane tokeny',
-		'Prompt': 'Prompt',
+		Prompt: 'Prompt',
 		Generated: 'Wygenerowane',
 		'KV cache total': 'Łącznie cache KV',
 		'Avg speed': 'Śr. prędkość',
@@ -1757,8 +1823,7 @@ const TRANSLATIONS: Partial<Record<SupportedLocale, TranslationDict>> = {
 		'MCP servers': 'serwery MCP',
 		'Add files, system prompt or configure MCP servers':
 			'Dodaj pliki, prompt systemowy lub skonfiguruj serwery MCP',
-		'Add files, prompts, tools or MCP Servers':
-			'Dodaj pliki, prompty, narzędzia lub serwery MCP',
+		'Add files, prompts, tools or MCP Servers': 'Dodaj pliki, prompty, narzędzia lub serwery MCP',
 		'Try again': 'Spróbuj ponownie',
 		'Select a resource to preview': 'Wybierz zasób do podglądu',
 		'Attach Resource': 'Dołącz zasób',
@@ -1777,8 +1842,7 @@ const TRANSLATIONS: Partial<Record<SupportedLocale, TranslationDict>> = {
 		Logging: 'Logowanie',
 		Completions: 'Uzupełnienia',
 		Tasks: 'Zadania',
-		'{{count}} tools available · Show details':
-			'Dostępnych narzędzi: {{count}} · Pokaż szczegóły',
+		'{{count}} tools available · Show details': 'Dostępnych narzędzi: {{count}} · Pokaż szczegóły',
 		'+ {{count}} more tools': '+ {{count}} więcej narzędzi',
 		'Update Conversation Title?': 'Zaktualizować tytuł rozmowy?',
 		'Do you want to update the conversation title to match the first message content?':
@@ -1800,7 +1864,7 @@ const TRANSLATIONS: Partial<Record<SupportedLocale, TranslationDict>> = {
 		'Save settings': 'Zapisz ustawienia',
 		'Reset Settings to Default': 'Przywróć ustawienia domyślne',
 		Confirm: 'Potwierdź',
-		'Are you sure you want to reset all settings to their default values? This will reset all parameters to the values provided by the server\'s /props endpoint and remove all your custom configurations.':
+		"Are you sure you want to reset all settings to their default values? This will reset all parameters to the values provided by the server's /props endpoint and remove all your custom configurations.":
 			'Czy na pewno chcesz przywrócić wszystkie ustawienia do wartości domyślnych? Spowoduje to zresetowanie wszystkich parametrów do wartości z punktu końcowego /props serwera i usunięcie wszystkich własnych konfiguracji.',
 		'Reset to Default': 'Przywróć domyślne',
 		'Do more with MCP': 'Zrób więcej z MCP',
@@ -1843,7 +1907,6 @@ const TRANSLATIONS: Partial<Record<SupportedLocale, TranslationDict>> = {
 		'Verify your network connection': 'Sprawdź połączenie sieciowe',
 		'Check server logs for any error messages':
 			'Sprawdź dzienniki serwera pod kątem komunikatów o błędach',
-		'MCP Resources': 'Zasoby MCP',
 		'Browse and attach resources from connected MCP servers to your chat context.':
 			'Przeglądaj i dołącz zasoby z połączonych serwerów MCP do kontekstu czatu.',
 		'Failed to read resource': 'Nie udało się odczytać zasobu',
@@ -1861,9 +1924,21 @@ const TRANSLATIONS: Partial<Record<SupportedLocale, TranslationDict>> = {
 	tr: {
 		'Offline references': 'Çevrimdışı başvurular',
 		'Official offline data': 'Resmî çevrimdışı veriler',
-		'DMC includes no classification data. Obtain it from the official publisher, accept its terms, and import the unchanged file for fully offline use.': 'DMC sınıflandırma verilerini içermez. Verileri resmî yayıncıdan alın, koşulları kabul edin ve tamamen çevrimdışı kullanım için değiştirilmemiş dosyayı içe aktarın.',
+		'DMC includes no classification data. Obtain it from the official publisher, accept its terms, and import the unchanged file for fully offline use.':
+			'DMC sınıflandırma verilerini içermez. Verileri resmî yayıncıdan alın, koşulları kabul edin ve tamamen çevrimdışı kullanım için değiştirilmemiş dosyayı içe aktarın.',
 		'Manage offline references': 'Çevrimdışı başvuruları yönet',
-		'Offline references are available in the Android app': 'Çevrimdışı başvurular Android uygulamasında kullanılabilir',
+		'Report response': 'Yanıtı bildir',
+		'Privacy and support': 'Gizlilik ve destek',
+		'Privacy policy': 'Gizlilik politikası',
+		'Read how InetMind handles local chats, attachments, diagnostics and optional network connections.':
+			'InetMind’in yerel sohbetleri, ekleri, tanılama verilerini ve isteğe bağlı ağ bağlantılarını nasıl işlediğini okuyun.',
+		'Open privacy policy': 'Gizlilik politikasını aç',
+		'Support and content reports': 'Destek ve içerik bildirimleri',
+		'Contact the developer. AI responses can also be reported directly from the flag button below each response.':
+			'Geliştiriciyle iletişime geçin. Yapay zeka yanıtları her yanıtın altındaki bayrakla da bildirilebilir.',
+		'Contact support': 'Destekle iletişime geç',
+		'Offline references are available in the Android app':
+			'Çevrimdışı başvurular Android uygulamasında kullanılabilir',
 		'Add to chat': 'Sohbete ekle',
 		'Add files': 'Dosya ekle',
 		Images: 'Görseller',
@@ -1952,15 +2027,14 @@ const TRANSLATIONS: Partial<Record<SupportedLocale, TranslationDict>> = {
 		'Speculative decoding enabled': 'Spekülatif kod çözme etkin',
 		'Search conversations...': 'Konuşmaları ara...',
 		'Search...': 'Ara...',
-		'Summary': 'Özet',
+		Summary: 'Özet',
 		'Agentic summary': 'Aracı özeti',
 		Send: 'Gönder',
 		'Conversation Name': 'Sohbet adı',
 		Messages: 'Mesajlar',
 		'Untitled conversation': 'Başlıksız sohbet',
 		'No conversations available': 'Kullanılabilir sohbet yok',
-		'No conversations found matching "{{query}}"':
-			'"{{query}}" ile eşleşen sohbet bulunamadı',
+		'No conversations found matching "{{query}}"': '"{{query}}" ile eşleşen sohbet bulunamadı',
 		Export: 'Dışa aktar',
 		Import: 'İçe aktar',
 		'Prompt processing time': 'İstem işleme süresi',
@@ -1987,17 +2061,18 @@ const TRANSLATIONS: Partial<Record<SupportedLocale, TranslationDict>> = {
 		Enable: 'Etkinleştir',
 		Disable: 'Devre dışı bırak',
 		'Run llama-server with <code>--tools</code> flag to enable <strong>Built-in Tools</strong>.':
-			'<strong>Yerleşik araçları</strong> etkinleştirmek için llama-server\'ı <code>--tools</code> bayrağıyla çalıştırın.',
+			"<strong>Yerleşik araçları</strong> etkinleştirmek için llama-server'ı <code>--tools</code> bayrağıyla çalıştırın.",
 		'Add or enable MCP Server(s) to access <strong>MCP Tools</strong>.':
 			'<strong>MCP araçlarına</strong> erişmek için MCP sunucuları ekleyin veya etkinleştirin.',
 		'Tool calls': 'Araç çağrıları',
 		'No MCP servers configured yet.': 'Henüz yapılandırılmış MCP sunucusu yok.',
-		'Add one to enable agentic features.': 'Aracı özellikleri etkinleştirmek için bir tane ekleyin.',
+		'Add one to enable agentic features.':
+			'Aracı özellikleri etkinleştirmek için bir tane ekleyin.',
 		'System message with actions': 'İşlemlerle sistem mesajı',
 		'Assistant message with actions': 'İşlemlerle asistan mesajı',
 		'Prompt tokens evaluated': 'Değerlendirilen istem belirteçleri',
 		'Tokens generated': 'Üretilen belirteçler',
-		'Prompt': 'İstem',
+		Prompt: 'İstem',
 		Generated: 'Üretilen',
 		'KV cache total': 'Toplam KV önbelleği',
 		'Avg speed': 'Ort. hız',
@@ -2011,7 +2086,7 @@ const TRANSLATIONS: Partial<Record<SupportedLocale, TranslationDict>> = {
 		'Enable or add MCP Server(s) to access <strong>MCP Tools</strong>.':
 			'MCP araçlarına erişmek için MCP sunucularını etkinleştirin veya ekleyin.',
 		'Run llama-server with <code>--tools</code> flag to enable':
-			'llama-server\'ı <code>--tools</code> bayrağıyla çalıştırarak etkinleştirin',
+			"llama-server'ı <code>--tools</code> bayrağıyla çalıştırarak etkinleştirin",
 		'<strong>Built-in Tools</strong>.': '<strong>Yerleşik araçlar</strong>.',
 		'<strong>MCP Tools</strong>.': '<strong>MCP araçları</strong>.',
 		'Load tools...': 'Araçlar yükleniyor...',
@@ -2063,7 +2138,7 @@ const TRANSLATIONS: Partial<Record<SupportedLocale, TranslationDict>> = {
 		'Save settings': 'Ayarları kaydet',
 		'Reset Settings to Default': 'Ayarları varsayılana sıfırla',
 		Confirm: 'Onayla',
-		'Are you sure you want to reset all settings to their default values? This will reset all parameters to the values provided by the server\'s /props endpoint and remove all your custom configurations.':
+		"Are you sure you want to reset all settings to their default values? This will reset all parameters to the values provided by the server's /props endpoint and remove all your custom configurations.":
 			'Tüm ayarları varsayılan değerlere sıfırlamak istediğinizden emin misiniz? Bu işlem tüm parametreleri sunucunun /props uç noktasından sağlanan değerlere sıfırlar ve tüm özel yapılandırmalarınızı kaldırır.',
 		'Reset to Default': 'Varsayılana sıfırla',
 		'Do more with MCP': 'MCP ile daha fazlasını yapın',
@@ -2106,7 +2181,6 @@ const TRANSLATIONS: Partial<Record<SupportedLocale, TranslationDict>> = {
 		'Verify your network connection': 'Ağ bağlantınızı doğrulayın',
 		'Check server logs for any error messages':
 			'Herhangi bir hata mesajı için sunucu günlüklerini kontrol edin',
-		'MCP Resources': 'MCP kaynakları',
 		'Browse and attach resources from connected MCP servers to your chat context.':
 			'Bağlı MCP sunucularından kaynakları göz atın ve bunları sohbet bağlamınıza ekleyin.',
 		'Failed to read resource': 'Kaynak okunamadı',
@@ -2191,7 +2265,11 @@ function interpolate(template: string, values?: TemplateValues): string {
 	});
 }
 
-export function t(source: string, values?: TemplateValues, locale: SupportedLocale = currentLocale): string {
+export function t(
+	source: string,
+	values?: TemplateValues,
+	locale: SupportedLocale = currentLocale
+): string {
 	const translated = TRANSLATIONS[locale]?.[source] ?? source;
 	return interpolate(translated, values);
 }

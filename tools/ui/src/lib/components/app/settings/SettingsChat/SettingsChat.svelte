@@ -205,6 +205,8 @@
 
 		<div
 			class="mx-auto max-w-3xl flex-1"
+			role="region"
+			aria-label="Settings content"
 			style="touch-action: pan-y;"
 			onpointerdown={handleSwipePointerDown}
 			onpointerup={handleSwipePointerUp}

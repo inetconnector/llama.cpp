@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Edit, Copy, RefreshCw, Trash2, ArrowRight, GitBranch } from '@lucide/svelte';
+	import { Edit, Copy, RefreshCw, Trash2, ArrowRight, GitBranch, Flag } from '@lucide/svelte';
 	import {
 		ActionIcon,
 		ChatMessageActionIconsBranchingControls,
@@ -11,6 +11,7 @@
 	import Label from '$lib/components/ui/label/label.svelte';
 	import { MessageRole } from '$lib/enums';
 	import { activeConversation } from '$lib/stores/conversations.svelte';
+	import { t } from '$lib/i18n';
 
 	interface Props {
 		role: MessageRole.USER | MessageRole.ASSISTANT;
@@ -36,6 +37,7 @@
 		showRawOutputSwitch?: boolean;
 		rawOutputEnabled?: boolean;
 		onRawOutputToggle?: (enabled: boolean) => void;
+		reportText?: string;
 	}
 
 	let {
@@ -56,7 +58,8 @@
 		showDeleteDialog,
 		showRawOutputSwitch = false,
 		rawOutputEnabled = false,
-		onRawOutputToggle
+		onRawOutputToggle,
+		reportText = ''
 	}: Props = $props();
 
 	let showForkDialog = $state(false);
@@ -79,6 +82,23 @@
 	function handleConfirmFork() {
 		onForkConversation?.({ name: forkName.trim(), includeAttachments: forkIncludeAttachments });
 		showForkDialog = false;
+	}
+
+	function handleReport() {
+		const bridge = (
+			window as Window & {
+				AndroidLegalBridge?: { reportContent?: (content: string) => void };
+			}
+		).AndroidLegalBridge;
+
+		if (typeof bridge?.reportContent === 'function') {
+			bridge.reportContent(reportText);
+			return;
+		}
+
+		const subject = encodeURIComponent('InetMind AI content report');
+		const body = encodeURIComponent(`Reported response:\n\n${reportText.slice(0, 4000)}`);
+		window.location.href = `mailto:apps@inetconnector.com?subject=${subject}&body=${body}`;
 	}
 </script>
 
@@ -107,6 +127,10 @@
 
 			{#if role === MessageRole.ASSISTANT && onContinue}
 				<ActionIcon icon={ArrowRight} tooltip="Continue" onclick={onContinue} />
+			{/if}
+
+			{#if role === MessageRole.ASSISTANT && reportText.trim()}
+				<ActionIcon icon={Flag} tooltip={t('Report response')} onclick={handleReport} />
 			{/if}
 
 			{#if onForkConversation}

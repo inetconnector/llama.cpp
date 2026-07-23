@@ -214,8 +214,8 @@
 	{#if showProcessingInfoTop}
 		<div class="mt-6 w-full max-w-3xl" in:fade>
 			<div class="processing-container">
-					<span class="processing-text">
-						{modelLoadingText ??
+				<span class="processing-text">
+					{modelLoadingText ??
 						processingState.getPromptProgressText() ??
 						processingState.getProcessingMessage() ??
 						t('Processing...')}
@@ -246,8 +246,8 @@
 	{#if showProcessingInfoBottom}
 		<div class="mt-4 w-full max-w-3xl" in:fade>
 			<div class="processing-container">
-					<span class="processing-text">
-						{modelLoadingText ??
+				<span class="processing-text">
+					{modelLoadingText ??
 						processingState.getPromptProgressText() ??
 						processingState.getProcessingMessage() ??
 						t('Processing...')}
@@ -333,6 +333,7 @@
 			showRawOutputSwitch={currentConfig.showRawOutputSwitch}
 			rawOutputEnabled={showRawOutput}
 			onRawOutputToggle={(enabled) => (showRawOutput = enabled)}
+			reportText={messageContent ?? message.content ?? ''}
 		/>
 	{/if}
 </div>
