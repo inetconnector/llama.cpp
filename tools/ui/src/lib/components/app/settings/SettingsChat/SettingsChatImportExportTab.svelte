@@ -36,6 +36,15 @@
 	let showSettingsImportSummary = $state(false);
 	let showSettingsExportDialog = $state(false);
 	let includeSensitiveData = $state(false);
+	const nativeWindow = window as Window & {
+		AndroidKnowledgeBridge?: { openKnowledgeModules?: () => void };
+		AndroidLegalBridge?: { openPrivacyPolicy?: () => void };
+	};
+	// Desktop builds have no Android bridge. Android Play deliberately omits only
+	// the knowledge bridge, while the full Android build exposes both bridges.
+	const hasOfflineReferences =
+		typeof nativeWindow.AndroidKnowledgeBridge?.openKnowledgeModules === 'function' ||
+		typeof nativeWindow.AndroidLegalBridge === 'undefined';
 
 	function handleSettingsExport() {
 		showSettingsExportDialog = true;
@@ -334,18 +343,20 @@
 		/>
 	</SettingsGroup>
 
-	<SettingsGroup title={t('Offline references')}>
-		<SettingsChatImportExportSection
-			title={t('Official offline data')}
-			description={t(
-				'DMC includes no classification data. Obtain it from the official publisher, accept its terms, and import the unchanged file for fully offline use.'
-			)}
-			IconComponent={BookOpenCheck}
-			buttonText={t('Manage offline references')}
-			onclick={handleOfflineReferences}
-			summary={{ show: false, verb: '', items: [] }}
-		/>
-	</SettingsGroup>
+	{#if hasOfflineReferences}
+		<SettingsGroup title={t('Offline references')}>
+			<SettingsChatImportExportSection
+				title={t('Official offline data')}
+				description={t(
+					'DMC includes no classification data. Obtain it from the official publisher, accept its terms, and import the unchanged file for fully offline use.'
+				)}
+				IconComponent={BookOpenCheck}
+				buttonText={t('Manage offline references')}
+				onclick={handleOfflineReferences}
+				summary={{ show: false, verb: '', items: [] }}
+			/>
+		</SettingsGroup>
+	{/if}
 
 	<SettingsGroup title={t('Privacy and support')}>
 		<SettingsChatImportExportSection
